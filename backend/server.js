@@ -62,6 +62,22 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Agent health check
+app.get('/health/agent', (req, res) => {
+  // Simple endpoint to verify agent is running
+  // The agent runs in a separate process, so we can't directly check it
+  // Instead, we return the LiveKit config which the agent needs
+  const agentConfigured = !!(process.env.LIVEKIT_API_KEY &&
+                              process.env.LIVEKIT_API_SECRET &&
+                              process.env.LIVEKIT_URL);
+
+  res.json({
+    agent_configured: agentConfigured,
+    livekit_url: process.env.LIVEKIT_URL || null,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // 1. POST /v1/sessions/start - Start new session
 app.post('/v1/sessions/start', authenticateToken, async (req, res) => {
   try {
