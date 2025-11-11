@@ -80,11 +80,12 @@ struct HomeScreen: View {
 
 struct CallAssistantButton: View {
     @ObservedObject var callCoordinator = AssistantCallCoordinator.shared
-    
+
     var body: some View {
         Button(action: {
             if callCoordinator.callState == .idle {
-                callCoordinator.startAssistantCall(context: "phone")
+                let enableLogging = UserSettings.shared.loggingEnabled
+                callCoordinator.startAssistantCall(context: "phone", enableLogging: enableLogging)
             } else {
                 callCoordinator.endAssistantCall()
             }
