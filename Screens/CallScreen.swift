@@ -6,9 +6,9 @@
 import SwiftUI
 
 struct CallScreen: View {
-    @State private var callCoordinator = AssistantCallCoordinator.shared
-    @State private var appCoordinator = AppCoordinator.shared
-    @State private var settings = UserSettings.shared
+    @ObservedObject private var callCoordinator = AssistantCallCoordinator.shared
+    @ObservedObject private var appCoordinator = AppCoordinator.shared
+    @ObservedObject private var settings = UserSettings.shared
     @State private var showErrorAlert = false
     @State private var selectedLoggingOption: LoggingOption?
     
@@ -178,7 +178,7 @@ struct LoggingOptionsView: View {
 }
 
 struct CallButtonView: View {
-    @State private var callCoordinator = AssistantCallCoordinator.shared
+    @ObservedObject private var callCoordinator = AssistantCallCoordinator.shared
     let selectedLoggingOption: CallScreen.LoggingOption
 
     var body: some View {

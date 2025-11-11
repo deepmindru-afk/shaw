@@ -61,7 +61,7 @@ class UserSettings: ObservableObject {
            let model = try? JSONDecoder().decode(AIModel.self, from: data) {
             self.selectedModel = model
         } else {
-            self.selectedModel = .gpt4oMini
+            self.selectedModel = .gpt41Mini
         }
 
         // Load selected voice
