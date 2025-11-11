@@ -23,6 +23,7 @@ import https from 'https';
 import http from 'http';
 import path from 'path';
 import fs from 'fs';
+import OpenAI from 'openai';
 import db, { usePostgres } from './database.js';
 import { generateRoomName, generateLiveKitToken, getLiveKitUrl, logLiveKitConfig, dispatchAgentToRoom } from './livekit.js';
 
@@ -63,6 +64,178 @@ const normalizeSession = (session) => {
     logging_enabled_snapshot: normalizeBoolean(session.logging_enabled_snapshot)
   };
 };
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+// Generate summary and title from transcription
+async function generateSummaryAndTitle(sessionId) {
+  try {
+    console.log(`📝 Generating summary for session ${sessionId}`);
+
+    // Get all turns for this session
+    const stmt = db.prepare(`
+      SELECT speaker, text, timestamp
+      FROM turns
+      WHERE session_id = ?
+      ORDER BY timestamp ASC
+    `);
+    const turns = await stmt.all(sessionId);
+
+    if (!turns || turns.length === 0) {
+      console.log(`⚠️  No turns found for session ${sessionId}`);
+      return;
+    }
+
+    // Format transcript
+    const transcript = turns.map(t => `${t.speaker}: ${t.text}`).join('\n');
+
+    // Generate summary using GPT-4
+    const summaryResponse = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a helpful assistant that summarizes voice conversations. Provide a concise summary that captures the key topics, decisions, and action items discussed.'
+        },
+        {
+          role: 'user',
+          content: `Summarize this conversation:\n\n${transcript}`
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 500
+    });
+
+    const summaryText = summaryResponse.choices[0].message.content;
+
+    // Extract action items
+    const actionItemsResponse = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'Extract action items from the summary as a JSON array of strings. If there are no action items, return an empty array.'
+        },
+        {
+          role: 'user',
+          content: summaryText
+        }
+      ],
+      temperature: 0.2,
+      max_tokens: 200,
+      response_format: { type: 'json_object' }
+    });
+
+    let actionItems = [];
+    try {
+      const parsed = JSON.parse(actionItemsResponse.choices[0].message.content);
+      actionItems = parsed.action_items || parsed.actions || [];
+    } catch (e) {
+      console.warn('Failed to parse action items:', e);
+    }
+
+    // Generate title from summary
+    const titleResponse = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'Generate a short, descriptive title (3-6 words) for this conversation summary. Return only the title, no quotes or extra text.'
+        },
+        {
+          role: 'user',
+          content: summaryText
+        }
+      ],
+      temperature: 0.5,
+      max_tokens: 20
+    });
+
+    const title = titleResponse.choices[0].message.content.trim().replace(/^["']|["']$/g, '');
+
+    // Generate tags
+    const tagsResponse = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'Extract 2-5 relevant topic tags from the summary as a JSON array of strings.'
+        },
+        {
+          role: 'user',
+          content: summaryText
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 100,
+      response_format: { type: 'json_object' }
+    });
+
+    let tags = [];
+    try {
+      const parsed = JSON.parse(tagsResponse.choices[0].message.content);
+      tags = parsed.tags || [];
+    } catch (e) {
+      console.warn('Failed to parse tags:', e);
+    }
+
+    // Save summary to database
+    const summaryId = crypto.randomUUID();
+    const insertStmt = db.prepare(`
+      INSERT INTO summaries (id, session_id, title, summary_text, action_items, tags, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ${usePostgres ? 'CURRENT_TIMESTAMP' : 'datetime(\'now\')'})
+    `);
+
+    await insertStmt.run(
+      summaryId,
+      sessionId,
+      title,
+      summaryText,
+      JSON.stringify(actionItems),
+      JSON.stringify(tags)
+    );
+
+    // Update session status
+    const updateStmt = db.prepare('UPDATE sessions SET summary_status = ? WHERE id = ?');
+    await updateStmt.run('ready', sessionId);
+
+    console.log(`✅ Summary generated for session ${sessionId}: "${title}"`);
+  } catch (error) {
+    console.error(`❌ Failed to generate summary for session ${sessionId}:`, error);
+
+    // Mark as failed
+    const updateStmt = db.prepare('UPDATE sessions SET summary_status = ? WHERE id = ?');
+    await updateStmt.run('failed', sessionId);
+  }
+}
+
+// Background job to process pending summaries
+async function processPendingSummaries() {
+  try {
+    // Find sessions that are ended and need summaries
+    const stmt = db.prepare(`
+      SELECT id
+      FROM sessions
+      WHERE summary_status = 'pending'
+        AND ended_at IS NOT NULL
+        AND logging_enabled_snapshot = ${usePostgres ? 'true' : '1'}
+      LIMIT 5
+    `);
+    const sessions = await stmt.all();
+
+    for (const session of sessions) {
+      await generateSummaryAndTitle(session.id);
+    }
+  } catch (error) {
+    console.error('Error processing pending summaries:', error);
+  }
+}
+
+// Run summary processor every 30 seconds
+setInterval(processPendingSummaries, 30000);
 
 // Simple auth middleware (checks Bearer token exists)
 const authenticateToken = (req, res, next) => {
@@ -432,7 +605,44 @@ app.get('/v1/sessions/:id/summary', authenticateToken, (req, res) => {
   }
 });
 
-// 8. DELETE /v1/sessions/{id} - Delete session
+// 8. PUT /v1/sessions/{id}/title - Update session title
+app.put('/v1/sessions/:id/title', authenticateToken, async (req, res) => {
+  try {
+    const sessionId = req.params.id;
+    const { title } = req.body;
+
+    if (!title || typeof title !== 'string' || title.trim().length === 0) {
+      return res.status(400).json({ error: 'Invalid title' });
+    }
+
+    // Verify session belongs to user
+    const sessionStmt = db.prepare('SELECT id FROM sessions WHERE id = ? AND user_id = ?');
+    const session = await sessionStmt.get(sessionId, req.userId);
+
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    // Check if summary exists
+    const summaryStmt = db.prepare('SELECT id FROM summaries WHERE session_id = ?');
+    const summary = await summaryStmt.get(sessionId);
+
+    if (!summary) {
+      return res.status(404).json({ error: 'Summary not found for this session' });
+    }
+
+    // Update title
+    const updateStmt = db.prepare('UPDATE summaries SET title = ? WHERE session_id = ?');
+    await updateStmt.run(title.trim(), sessionId);
+
+    res.json({ title: title.trim() });
+  } catch (error) {
+    console.error('Update title error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 9. DELETE /v1/sessions/{id} - Delete session
 app.delete('/v1/sessions/:id', authenticateToken, (req, res) => {
   try {
     const sessionId = req.params.id;
