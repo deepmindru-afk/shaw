@@ -52,7 +52,24 @@ struct SessionDetailScreen: View {
                     }
                     
                     if let summary = summary {
-                        SummarySection(summary: summary)
+                        SummarySection(
+                            summary: summary,
+                            sessionID: sessionID,
+                            onTitleUpdated: { newTitle in
+                                if var updatedSummary = self.summary {
+                                    updatedSummary = SessionSummary(
+                                        id: updatedSummary.id,
+                                        sessionId: updatedSummary.sessionId,
+                                        title: newTitle,
+                                        summaryText: updatedSummary.summaryText,
+                                        actionItems: updatedSummary.actionItems,
+                                        tags: updatedSummary.tags,
+                                        createdAt: updatedSummary.createdAt
+                                    )
+                                    self.summary = updatedSummary
+                                }
+                            }
+                        )
                     } else if let session = session {
                         ProcessingSummaryView(status: session.summaryStatus)
                     }
@@ -138,16 +155,64 @@ struct SessionDetailScreen: View {
 
 struct SummarySection: View {
     let summary: SessionSummary
-    
+    let sessionID: String
+    let onTitleUpdated: (String) -> Void
+
+    @State private var isEditingTitle = false
+    @State private var editedTitle: String = ""
+    @State private var isUpdating = false
+    @State private var updateError: String?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Summary")
                 .font(.title2)
                 .fontWeight(.bold)
-            
-            Text(summary.title)
-                .font(.headline)
-            
+
+            HStack {
+                if isEditingTitle {
+                    TextField("Session Title", text: $editedTitle)
+                        .font(.headline)
+                        .textFieldStyle(.roundedBorder)
+
+                    if isUpdating {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                    } else {
+                        Button("Save") {
+                            updateTitle()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(editedTitle.trimmingCharacters(in: .whitespaces).isEmpty)
+
+                        Button("Cancel") {
+                            isEditingTitle = false
+                            editedTitle = summary.title
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                } else {
+                    Text(summary.title)
+                        .font(.headline)
+
+                    Spacer()
+
+                    Button(action: {
+                        editedTitle = summary.title
+                        isEditingTitle = true
+                    }) {
+                        Image(systemName: "pencil")
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
+
+            if let error = updateError {
+                Text(error)
+                    .font(.caption)
+                    .foregroundColor(.red)
+            }
+
             Text(summary.summaryText)
                 .font(.body)
             
@@ -185,6 +250,51 @@ struct SummarySection: View {
         .padding()
         .background(Color(.systemGray6))
         .cornerRadius(12)
+    }
+
+    private func updateTitle() {
+        let trimmedTitle = editedTitle.trimmingCharacters(in: .whitespaces)
+        guard !trimmedTitle.isEmpty else { return }
+
+        isUpdating = true
+        updateError = nil
+
+        Task {
+            do {
+                guard let url = URL(string: "\(Configuration.shared.apiBaseURL)/sessions/\(sessionID)/title") else {
+                    throw URLError(.badURL)
+                }
+
+                var request = URLRequest(url: url)
+                request.httpMethod = "PUT"
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+                if let token = try? Configuration.shared.authService.getAuthToken() {
+                    request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                }
+
+                let body = ["title": trimmedTitle]
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+                let (_, response) = try await URLSession.shared.data(for: request)
+
+                guard let httpResponse = response as? HTTPURLResponse,
+                      (200...299).contains(httpResponse.statusCode) else {
+                    throw URLError(.badServerResponse)
+                }
+
+                await MainActor.run {
+                    onTitleUpdated(trimmedTitle)
+                    isEditingTitle = false
+                    isUpdating = false
+                }
+            } catch {
+                await MainActor.run {
+                    updateError = "Failed to update title: \(error.localizedDescription)"
+                    isUpdating = false
+                }
+            }
+        }
     }
 }
 
