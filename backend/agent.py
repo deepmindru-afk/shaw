@@ -3,7 +3,7 @@ import logging
 import aiohttp
 from dotenv import load_dotenv
 from livekit import agents
-from livekit.agents import AgentSession, Agent, RoomInputOptions
+from livekit.agents import AgentSession, Agent, RoomInputOptions, function_tool, RunContext
 from livekit.plugins import openai
 
 # Load environment variables from .env file
@@ -19,8 +19,67 @@ BACKEND_URL = os.getenv('BACKEND_URL', 'https://shaw.up.railway.app')
 class Assistant(Agent):
     def __init__(self) -> None:
         super().__init__(
-            instructions="You are a helpful voice AI assistant for CarPlay. Keep responses concise, clear, and in English for safe driving. Default to English unless the driver explicitly asks for another language."
+            instructions="You are a helpful voice AI assistant for CarPlay. Keep responses concise, clear, and in English for safe driving. Default to English unless the driver explicitly asks for another language. When users ask questions requiring current information (news, weather, traffic, events, facts), use the web_search tool."
         )
+
+    @function_tool()
+    async def web_search(
+        self,
+        context: RunContext,
+        query: str,
+    ) -> str:
+        """Search the web for current information using Perplexity.
+
+        Args:
+            query: The search query to look up current information, news, weather, traffic, or real-time facts
+
+        Returns:
+            A concise answer based on web search results
+        """
+        try:
+            api_key = os.getenv('PERPLEXITY_API_KEY')
+            if not api_key:
+                logger.error("PERPLEXITY_API_KEY not found")
+                return "Search unavailable: API key not configured"
+
+            logger.info(f"🔍 Perplexity search: {query}")
+
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    'https://api.perplexity.ai/chat/completions',
+                    headers={
+                        'Authorization': f'Bearer {api_key}',
+                        'Content-Type': 'application/json'
+                    },
+                    json={
+                        'model': 'llama-3.1-sonar-small-128k-online',
+                        'messages': [
+                            {
+                                'role': 'system',
+                                'content': 'Provide concise, factual answers suitable for voice interaction while driving. Keep responses under 3 sentences for safety.'
+                            },
+                            {
+                                'role': 'user',
+                                'content': query
+                            }
+                        ],
+                        'temperature': 0.2,
+                        'max_tokens': 200,
+                    },
+                    timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        result = data['choices'][0]['message']['content']
+                        logger.info(f"✅ Perplexity result: {result[:100]}...")
+                        return result
+                    else:
+                        error_text = await response.text()
+                        logger.error(f"❌ Perplexity API error: {response.status} - {error_text}")
+                        return "I'm having trouble searching the web right now."
+        except Exception as e:
+            logger.error(f"❌ Web search error: {e}")
+            return "Search is temporarily unavailable."
 
 async def save_turn(session_id: str, speaker: str, text: str):
     """Save a conversation turn to the backend"""
@@ -70,15 +129,21 @@ async def entrypoint(ctx: agents.JobContext):
 
     try:
         if realtime_mode:
-            # OpenAI Realtime mode: direct speech-to-speech
-            logger.info(f"🔥 Using OpenAI Realtime mode with voice: {voice}")
+            # OpenAI Realtime mode with Cartesia TTS (hybrid for cost savings)
+            logger.info(f"💰 Using OpenAI Realtime (text-only) + Cartesia Sonic TTS")
+            logger.info(f"📢 Cartesia voice: {voice}")
+
+            # Realtime model in text-only mode for speech understanding
             realtime_model = openai.realtime.RealtimeModel(
-                voice=voice,  # OpenAI Realtime voices: alloy, echo, fable, onyx, nova, shimmer
                 temperature=0.8,
-                modalities=["text", "audio"],
+                modalities=["text"],  # Text-only output (no audio generation)
             )
 
-            agent_session = AgentSession(llm=realtime_model)
+            # AgentSession with separate Cartesia TTS
+            agent_session = AgentSession(
+                llm=realtime_model,
+                tts=voice  # Cartesia voice (e.g., "cartesia/sonic-3:...")
+            )
 
             # Set up event handlers for transcription capture
             @agent_session.on("user_speech_committed")
