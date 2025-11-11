@@ -279,7 +279,13 @@ struct SessionMetadataSection: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
-                
+
+                if let duration = session.durationMinutes {
+                    Label("\(duration) minute\(duration == 1 ? "" : "s")", systemImage: "timer")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+
                 HStack {
                     Image(systemName: session.loggingEnabledSnapshot ? "checkmark.shield" : "nosign")
                     Text(session.loggingEnabledSnapshot ? "Logging enabled" : "Logging disabled")

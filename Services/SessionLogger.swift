@@ -137,21 +137,25 @@ class SessionLogger {
         return try handleResponse(data: data, response: response, decoder: decoder)
     }
     
-    func endSession(sessionID: String) async throws {
+    func endSession(sessionID: String, durationMinutes: Int? = nil) async throws {
         guard let url = URL(string: "\(configuration.apiBaseURL)/sessions/end") else {
             throw SessionLoggerError.invalidURL
         }
-        
+
         var request = createAuthenticatedRequest(url: url, method: "POST")
-        
-        let body: [String: Any] = [
+
+        var body: [String: Any] = [
             "session_id": sessionID
         ]
-        
+
+        if let durationMinutes = durationMinutes {
+            body["duration_minutes"] = durationMinutes
+        }
+
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        
+
         let (data, response) = try await urlSession.data(for: request)
-        
+
         let decoder = createDecoder()
         let _: EmptyResponse = try handleResponse(data: data, response: response, decoder: decoder)
     }

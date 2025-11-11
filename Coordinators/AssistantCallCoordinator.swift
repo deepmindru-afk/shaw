@@ -30,6 +30,9 @@ class AssistantCallCoordinator: ObservableObject {
     // Store the context for when the call connects
     private var pendingContext: Session.SessionContext?
 
+    // Track call start time for duration calculation
+    private var callStartTime: Date?
+
     private init() {
         callManager.delegate = self
         liveKitService.delegate = self
@@ -58,6 +61,13 @@ class AssistantCallCoordinator: ObservableObject {
         callState = .disconnecting
         errorMessage = nil
 
+        // Calculate call duration
+        let durationMinutes: Int? = {
+            guard let startTime = callStartTime else { return nil }
+            let duration = Date().timeIntervalSince(startTime)
+            return Int(ceil(duration / 60.0))
+        }()
+
         // Store session ID before clearing it so we can navigate to it
         let completedSessionID = currentSessionID
 
@@ -76,7 +86,7 @@ class AssistantCallCoordinator: ObservableObject {
         if let sessionID = currentSessionID {
             Task {
                 do {
-                    try await sessionLogger.endSession(sessionID: sessionID)
+                    try await sessionLogger.endSession(sessionID: sessionID, durationMinutes: durationMinutes)
 
                     // Nothing else to do here - navigation already happened
                 } catch {
@@ -90,6 +100,7 @@ class AssistantCallCoordinator: ObservableObject {
         }
 
         pendingContext = nil
+        callStartTime = nil
         callState = .idle
     }
     
@@ -101,7 +112,7 @@ class AssistantCallCoordinator: ObservableObject {
             handleCallConnected()
             return
         }
-        
+
         Task {
             do {
                 // Start session and get LiveKit credentials
@@ -110,6 +121,7 @@ class AssistantCallCoordinator: ObservableObject {
                 // Connect to LiveKit
                 await MainActor.run {
                     currentSessionID = response.sessionId
+                    callStartTime = Date()
                     liveKitService.connect(
                         sessionID: response.sessionId,
                         url: response.livekitUrl,

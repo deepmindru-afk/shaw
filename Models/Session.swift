@@ -13,7 +13,8 @@ struct Session: Identifiable, Codable {
     var endedAt: Date?
     let loggingEnabledSnapshot: Bool
     var summaryStatus: SummaryStatus
-    
+    var durationMinutes: Int?
+
     enum CodingKeys: String, CodingKey {
         case id
         case userId = "user_id"
@@ -22,6 +23,7 @@ struct Session: Identifiable, Codable {
         case endedAt = "ended_at"
         case loggingEnabledSnapshot = "logging_enabled_snapshot"
         case summaryStatus = "summary_status"
+        case durationMinutes = "duration_minutes"
     }
     
     enum SessionContext: String, Codable {

@@ -304,9 +304,9 @@ app.post('/v1/sessions/:id/turns', authenticateToken, (req, res) => {
 });
 
 // 4. GET /v1/sessions - Fetch user's sessions
-app.get('/v1/sessions', authenticateToken, (req, res) => {
+app.get('/v1/sessions', authenticateToken, async (req, res) => {
   try {
-    const sessions = db.prepare(`
+    const stmt = db.prepare(`
       SELECT
         s.id,
         COALESCE(sm.title, 'Session ' || substr(s.id, 9, 8)) as title,
@@ -315,10 +315,11 @@ app.get('/v1/sessions', authenticateToken, (req, res) => {
         s.ended_at
       FROM sessions s
       LEFT JOIN summaries sm ON s.id = sm.session_id
-      WHERE s.user_id = ?
+      WHERE s.user_id = ? AND s.logging_enabled_snapshot = ${usePostgres ? 'true' : '1'}
       ORDER BY s.started_at DESC
       LIMIT 50
-    `).all(req.userId);
+    `);
+    const sessions = await stmt.all(req.userId);
 
     res.json(sessions);
   } catch (error) {
