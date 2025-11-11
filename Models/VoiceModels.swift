@@ -53,12 +53,20 @@ enum AIModel: String, Codable, CaseIterable {
     case gpt4oMini = "gpt-4o-mini"
     case gpt4o = "gpt-4o"
     case gpt4Turbo = "gpt-4-turbo"
-    
+
     var displayName: String {
         switch self {
         case .gpt4oMini: return "GPT-4o Mini"
         case .gpt4o: return "GPT-4o"
         case .gpt4Turbo: return "GPT-4 Turbo"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .gpt4oMini: return "Fast and efficient for most conversations"
+        case .gpt4o: return "Best balance of speed and capability"
+        case .gpt4Turbo: return "Most capable, longer context"
         }
     }
 }
