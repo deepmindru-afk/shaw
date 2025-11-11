@@ -91,10 +91,10 @@ class AssistantCallCoordinator: ObservableObject {
             do {
                 // Start session and get LiveKit credentials
                 let response = try await sessionLogger.startSession(context: context)
-                currentSessionID = response.sessionId
-                
+
                 // Connect to LiveKit
                 await MainActor.run {
+                    currentSessionID = response.sessionId
                     liveKitService.connect(
                         sessionID: response.sessionId,
                         url: response.livekitUrl,
