@@ -5,11 +5,6 @@
 
 import Foundation
 
-// Forward declarations for models defined in CallScreen
-enum AIModel: String, Codable { case gpt4oMini = "gpt-4o-mini", gpt4o = "gpt-4o", gpt4Turbo = "gpt-4-turbo" }
-enum TTSProvider: String, Codable { case cartesia, elevenlabs }
-struct TTSVoice: Identifiable, Codable, Equatable { let id: String; let name: String; let description: String; let provider: TTSProvider }
-
 class UserSettings: ObservableObject {
     @Published var loggingEnabled: Bool {
         didSet {

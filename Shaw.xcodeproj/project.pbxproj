@@ -41,6 +41,7 @@
 		F9E8D7C6B5F4E9D8C7F2E6D3 /* SessionLoggerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7F9D8C6A5B4F3E9D8C1F7E4 /* SessionLoggerTests.swift */; };
 		214BE7CF0C7B4A119FEB7999 /* CallScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE765871A2DC4733B411C8CB /* CallScreen.swift */; };
 		4842ACCA0B0D43E4989ABC29 /* VoicePreviewService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ACA884917C34E0C8DEDA8FD /* VoicePreviewService.swift */; };
+		3AF7500883614872B893F60F /* VoiceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78DC8E30FF4444B1B6907FD4 /* VoiceModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -100,6 +101,7 @@
 		F8D9E7C6B5A4F3E8D9F2E7C5 /* AuthServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
 		DE765871A2DC4733B411C8CB /* CallScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallScreen.swift; sourceTree = "<group>"; };
 		9ACA884917C34E0C8DEDA8FD /* VoicePreviewService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoicePreviewService.swift; sourceTree = "<group>"; };
+		78DC8E30FF4444B1B6907FD4 /* VoiceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceModels.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -248,6 +250,7 @@
 			children = (
 				5F4B35EC9C1C4B6E70B04D67 /* Session.swift */,
 				EE42B9415312B56F7EA4DB3F /* UserSettings.swift */,
+							78DC8E30FF4444B1B6907FD4 /* VoiceModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -418,6 +421,7 @@
 				8ACAA9DD5F346B0A84B2425C /* AssistantCallCoordinator.swift in Sources */,
 							214BE7CF0C7B4A119FEB7999 /* CallScreen.swift in Sources */,
 				4842ACCA0B0D43E4989ABC29 /* VoicePreviewService.swift in Sources */,
+							3AF7500883614872B893F60F /* VoiceModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
