@@ -66,7 +66,7 @@ async def entrypoint(ctx: agents.JobContext):
 
     realtime_mode = metadata.get('realtime', True)  # Default to realtime for now
     voice = metadata.get('voice', 'alloy')
-    model = metadata.get('model', 'openai/gpt-4.1-mini')
+    model = metadata.get('model', 'openai/gpt-5-mini')
 
     try:
         if realtime_mode:

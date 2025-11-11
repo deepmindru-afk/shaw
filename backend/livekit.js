@@ -99,7 +99,7 @@ export async function dispatchAgentToRoom(roomName, sessionId, model, voice, rea
   const agentMetadata = JSON.stringify({
     session_id: sessionId,
     realtime: realtime || false,
-    model: model || 'openai/gpt-4.1-mini',
+    model: model || 'openai/gpt-5-mini',
     voice: voice || (realtime ? 'alloy' : 'cartesia/sonic-3:9626c31c-bec5-4cca-baa8-f8ba9e84c8bc'),
     instructions: 'You are a helpful voice AI assistant for CarPlay. Keep responses concise and clear for safe driving.'
   });

@@ -125,9 +125,9 @@ async function generateSummaryAndTitle(sessionId) {
     // Format transcript
     const transcript = turns.map(t => `${t.speaker}: ${t.text}`).join('\n');
 
-    // Generate summary using GPT-4
+    // Generate summary using GPT-5 nano
     const summaryResponse = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-nano',
       messages: [
         {
           role: 'system',
@@ -146,7 +146,7 @@ async function generateSummaryAndTitle(sessionId) {
 
     // Extract action items
     const actionItemsResponse = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-nano',
       messages: [
         {
           role: 'system',
@@ -172,7 +172,7 @@ async function generateSummaryAndTitle(sessionId) {
 
     // Generate title from summary
     const titleResponse = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-nano',
       messages: [
         {
           role: 'system',
@@ -191,7 +191,7 @@ async function generateSummaryAndTitle(sessionId) {
 
     // Generate tags
     const tagsResponse = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-nano',
       messages: [
         {
           role: 'system',
