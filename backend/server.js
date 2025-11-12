@@ -28,6 +28,7 @@ import db, { usePostgres } from './database.js';
 import { generateRoomName, generateLiveKitToken, getLiveKitUrl, logLiveKitConfig, dispatchAgentToRoom } from './livekit.js';
 import iapRoutes from './routes/iap.js';
 import { checkEntitlement, incrementFreeTierUsage } from './middleware/entitlementCheck.js';
+import { FREE_TIER_MINUTES } from './middleware/entitlementCheck.js';
 
 // Log LiveKit configuration after env is loaded and modules are imported
 logLiveKitConfig();
@@ -130,9 +131,9 @@ async function generateSummaryAndTitle(sessionId) {
     // Format transcript
     const transcript = turns.map(t => `${t.speaker}: ${t.text}`).join('\n');
 
-    // Generate summary using GPT-5 nano
+    // Generate summary using GPT-4o-mini (cost-effective for summaries)
     const summaryResponse = await openai.chat.completions.create({
-      model: 'gpt-5-nano',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -151,7 +152,7 @@ async function generateSummaryAndTitle(sessionId) {
 
     // Extract action items
     const actionItemsResponse = await openai.chat.completions.create({
-      model: 'gpt-5-nano',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -177,7 +178,7 @@ async function generateSummaryAndTitle(sessionId) {
 
     // Generate title from summary
     const titleResponse = await openai.chat.completions.create({
-      model: 'gpt-5-nano',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -196,7 +197,7 @@ async function generateSummaryAndTitle(sessionId) {
 
     // Generate tags
     const tagsResponse = await openai.chat.completions.create({
-      model: 'gpt-5-nano',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -247,7 +248,22 @@ async function generateSummaryAndTitle(sessionId) {
     console.log(`   Tags: ${tags.length}`);
     console.log(`   Session summary_status updated to 'ready'`);
   } catch (error) {
-    console.error(`❌ Failed to generate summary for session ${sessionId}:`, error);
+    console.error(`❌ Failed to generate summary for session ${sessionId}:`, error.message);
+    console.error(`   Error type: ${error.constructor.name}`);
+    console.error(`   Error details:`, error);
+    
+    // Log OpenAI API errors specifically
+    if (error.response) {
+      console.error(`   OpenAI API Error:`, {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      });
+    }
+    
+    if (error.message?.includes('model')) {
+      console.error(`   ⚠️  Model-related error - check if model name is correct`);
+    }
 
     // Mark as failed
     const updateStmt = db.prepare('UPDATE sessions SET summary_status = ? WHERE id = ?');
@@ -563,12 +579,12 @@ function getCurrentMonthUsage(userId) {
 // Helper function to get subscription tier limits
 function getTierLimits(tier) {
   const limits = {
-    'free': 60,
+    'free': FREE_TIER_MINUTES, // Use the actual free tier limit
     'basic': 300,
     'pro': 1000,
     'enterprise': -1 // Unlimited
   };
-  return limits[tier] || 60;
+  return limits[tier] || FREE_TIER_MINUTES;
 }
 
 // 2. POST /v1/sessions/end - End session
