@@ -4,7 +4,7 @@
 echo "🚀 Starting web server and agent worker..."
 
 # Start agent worker in background
-python agent.py &
+python3 agent.py &
 AGENT_PID=$!
 echo "✅ Agent worker started (PID: $AGENT_PID)"
 
