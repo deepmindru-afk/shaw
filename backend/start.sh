@@ -49,13 +49,17 @@ if [ -f "/opt/venv/bin/python" ]; then
   PYTHON_CMD="/opt/venv/bin/python"
 elif [ -f "backend/venv/bin/python" ]; then
   PYTHON_CMD="backend/venv/bin/python"
-elif command -v python3 &> /dev/null; then
-  PYTHON_CMD="python3"
+elif command -v python3 >/dev/null 2>&1; then
+  PYTHON_CMD=$(command -v python3)
+elif command -v python >/dev/null 2>&1; then
+  PYTHON_CMD=$(command -v python)
 else
-  PYTHON_CMD="python"
+  echo "❌ Python not found! Available commands:"
+  which -a python3 python 2>/dev/null || echo "  No python found"
+  exit 1
 fi
 
-echo "🔍 Using Python: $PYTHON_CMD"
+echo "🔍 Using Python: $PYTHON_CMD ($($PYTHON_CMD --version 2>&1 || echo 'version check failed'))"
 
 # Verify Python can find the library (non-fatal, for debugging)
 echo "🔍 Verifying Python library dependencies..."
