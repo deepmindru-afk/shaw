@@ -308,18 +308,83 @@ app.get('/health', (req, res) => {
 });
 
 // Agent health check
-app.get('/health/agent', (req, res) => {
-  // Simple endpoint to verify agent is running
-  // The agent runs in a separate process, so we can't directly check it
-  // Instead, we return the LiveKit config which the agent needs
+app.get('/health/agent', async (req, res) => {
+  // Check if agent is configured and can connect to LiveKit
   const agentConfigured = !!(process.env.LIVEKIT_API_KEY &&
                               process.env.LIVEKIT_API_SECRET &&
                               process.env.LIVEKIT_URL);
 
+  let agentStatus = 'unknown';
+  let lastRoomActivity = null;
+  let agentWorkerInfo = null;
+  
+  if (agentConfigured) {
+    try {
+      // Try to connect to LiveKit to verify credentials work
+      const { RoomServiceClient, AgentDispatchClient } = await import('livekit-server-sdk');
+      const roomService = new RoomServiceClient(
+        process.env.LIVEKIT_URL,
+        process.env.LIVEKIT_API_KEY,
+        process.env.LIVEKIT_API_SECRET
+      );
+      
+      const agentDispatchClient = new AgentDispatchClient(
+        process.env.LIVEKIT_URL,
+        process.env.LIVEKIT_API_KEY,
+        process.env.LIVEKIT_API_SECRET
+      );
+      
+      // List recent rooms to verify API access works
+      try {
+        const rooms = await roomService.listRooms();
+        agentStatus = 'livekit_connected';
+        if (rooms && rooms.length > 0) {
+          // Get the most recent room
+          const recentRoom = rooms[0];
+          lastRoomActivity = {
+            room_name: recentRoom.name,
+            num_participants: recentRoom.numParticipants || 0,
+            created_at: recentRoom.creationTime ? new Date(recentRoom.creationTime * 1000).toISOString() : null
+          };
+        }
+        
+        // Try to list dispatches to see if agent worker is registered
+        // This helps verify the agent worker is running and listening
+        try {
+          // List dispatches for a test room (won't create anything)
+          // If this works, it means the API can communicate with LiveKit
+          // Note: We can't directly check if workers are registered via API
+          agentWorkerInfo = {
+            note: 'Agent worker registration cannot be verified via API',
+            check_logs: 'Check /tmp/agent.log for worker registration messages',
+            expected_log: 'Agent worker appears to be connecting (checking logs...)',
+            agent_name: process.env.LIVEKIT_AGENT_NAME || 'agent'
+          };
+        } catch (error) {
+          // Ignore - dispatch API might not be available
+        }
+      } catch (error) {
+        agentStatus = 'livekit_error';
+        console.error('LiveKit health check error:', error.message);
+      }
+    } catch (error) {
+      agentStatus = 'sdk_error';
+      console.error('Agent health check error:', error.message);
+    }
+  } else {
+    agentStatus = 'not_configured';
+  }
+
   res.json({
     agent_configured: agentConfigured,
+    agent_status: agentStatus,
     livekit_url: process.env.LIVEKIT_URL || null,
-    timestamp: new Date().toISOString()
+    last_room_activity: lastRoomActivity,
+    agent_worker_info: agentWorkerInfo,
+    timestamp: new Date().toISOString(),
+    note: agentStatus === 'livekit_connected' 
+      ? 'LiveKit API is accessible. Check agent worker logs to verify registration: tail -f /tmp/agent.log'
+      : 'Check agent worker logs: tail -f /tmp/agent.log'
   });
 });
 
@@ -421,10 +486,19 @@ app.post('/v1/sessions/start', authenticateToken, async (req, res) => {
       console.log(`  TTS voice: ${selectedVoice}`);
     }
 
-    // Dispatch agent to room (don't wait for it, run in background)
-    dispatchAgentToRoom(roomName, sessionId, selectedModel, selectedVoice, useRealtimeMode, tool_calling_enabled, web_search_enabled).catch(error => {
-      console.error(`Failed to dispatch agent for session ${sessionId}:`, error.message);
-    });
+    // Dispatch agent to room with verification (runs in background, but logs verification results)
+    // Verification ensures the agent actually joins before the client starts speaking
+    dispatchAgentToRoom(roomName, sessionId, selectedModel, selectedVoice, useRealtimeMode, tool_calling_enabled, web_search_enabled, true)
+      .then(dispatch => {
+        console.log(`✅ Agent dispatch completed for session ${sessionId} - dispatch ID: ${dispatch.id}`);
+      })
+      .catch(error => {
+        console.error(`❌ CRITICAL: Failed to dispatch agent for session ${sessionId}:`, error.message);
+        console.error(`   Room: ${roomName}`);
+        console.error(`   This session may not work - agent will not join the room`);
+        console.error(`   Check if agent worker is running: ps aux | grep "agent.py"`);
+        console.error(`   Check agent logs: tail -f /tmp/agent.log`);
+      });
 
     res.json({
       session_id: sessionId,

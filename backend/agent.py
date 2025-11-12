@@ -159,13 +159,16 @@ async def save_turn(session_id: str, speaker: str, text: str):
 async def entrypoint(ctx: agents.JobContext):
     """Entry point for the LiveKit agent - supports both Realtime and Turn-based modes"""
     logger.info("=" * 60)
-    logger.info(f"🎙️  Agent entrypoint called for room: {ctx.room.name}")
+    logger.info(f"🎙️  Agent entrypoint called!")
+    logger.info(f"   Room name: {ctx.room.name}")
     logger.info(f"   Room SID: {ctx.room.sid}")
     logger.info(f"   Job ID: {ctx.job.id}")
+    logger.info(f"   Job metadata: {ctx.job.metadata}")
     logger.info("=" * 60)
     
     # Note: Room is NOT connected yet - AgentSession.start() will connect automatically
     # RoomIO will automatically handle track subscription when AgentSession starts
+    # The room may not exist yet - LiveKit will create it automatically when agent joins
 
     # Parse metadata from dispatch
     import json
@@ -229,7 +232,8 @@ async def entrypoint(ctx: agents.JobContext):
             
             # Now that we're connected, log participants and tracks
             logger.info("✅ Agent session started - room connected")
-            logger.info(f"👥 Participants in room: {len(ctx.room.remote_participants)}")
+            logger.info(f"🤖 Agent identity: {ctx.room.local_participant.identity if ctx.room.local_participant else 'unknown'}")
+            logger.info(f"👥 Remote participants in room: {len(ctx.room.remote_participants)}")
             for participant in ctx.room.remote_participants.values():
                 logger.info(f"   - {participant.identity} (SID: {participant.sid})")
                 for track_pub in participant.track_publications.values():
@@ -241,20 +245,21 @@ async def entrypoint(ctx: agents.JobContext):
 
             logger.info("✅ Full Realtime agent session started successfully")
         else:
-            # Hybrid mode: OpenAI Realtime (text-only) + separate TTS (Cartesia/ElevenLabs)
-            logger.info(f"💰 Using HYBRID mode: OpenAI Realtime (text-only) + {voice}")
+            # Hybrid mode: LiveKit Inference LLM + TTS (Cartesia/ElevenLabs via LiveKit Inference)
+            logger.info(f"💰 Using HYBRID mode: LiveKit Inference LLM + {voice}")
+            logger.info(f"📢 LLM model: {model}")
             logger.info(f"📢 TTS voice: {voice}")
 
-            # Realtime model in text-only mode for speech understanding
-            realtime_model = openai.realtime.RealtimeModel(
-                temperature=0.8,
-                modalities=["text"],  # Text-only output (no audio generation)
-            )
+            # Use LiveKit Inference for LLM (not OpenAI Realtime)
+            # Model format: "openai/gpt-5-mini", "openai/gpt-4.1-mini", etc.
+            # LiveKit Inference handles the connection automatically
+            llm_model = model or "openai/gpt-5-mini"
 
-            # AgentSession with separate TTS (Cartesia or ElevenLabs)
+            # AgentSession with LiveKit Inference LLM + TTS
+            # TTS voice format: "cartesia/sonic-3:..." or "elevenlabs/eleven_turbo_v2_5:..."
             agent_session = AgentSession(
-                llm=realtime_model,
-                tts=voice  # e.g., "cartesia/sonic-3:..." or "elevenlabs/..."
+                llm=llm_model,  # LiveKit Inference LLM (string descriptor)
+                tts=voice  # LiveKit Inference TTS (string descriptor)
             )
 
             # Set up event handlers for transcription capture
@@ -282,7 +287,8 @@ async def entrypoint(ctx: agents.JobContext):
             
             # Now that we're connected, log participants and tracks
             logger.info("✅ Hybrid agent session started - room connected")
-            logger.info(f"👥 Participants in room: {len(ctx.room.remote_participants)}")
+            logger.info(f"🤖 Agent identity: {ctx.room.local_participant.identity if ctx.room.local_participant else 'unknown'}")
+            logger.info(f"👥 Remote participants in room: {len(ctx.room.remote_participants)}")
             for participant in ctx.room.remote_participants.values():
                 logger.info(f"   - {participant.identity} (SID: {participant.sid})")
                 for track_pub in participant.track_publications.values():
@@ -318,10 +324,17 @@ if __name__ == "__main__":
     
     try:
         # Start the agent worker with explicit dispatch support
+        # IMPORTANT: agent_name must match the name used in dispatchAgentToRoom() in livekit.js
+        # This is "agent" for Railway/local workers, or "shaw-voice-assistant" for LiveKit Cloud deployment
+        agent_name = os.getenv("LIVEKIT_AGENT_NAME", "agent")
+        logger.info(f"📋 Agent name for dispatch: {agent_name}")
+        logger.info(f"   This must match the agent name used in dispatchAgentToRoom()")
+        logger.info(f"   Set LIVEKIT_AGENT_NAME env var to override (default: 'agent')")
+        
         agents.cli.run_app(
             agents.WorkerOptions(
                 entrypoint_fnc=entrypoint,
-                agent_name="agent",  # Required for explicit dispatch - must match dispatch call
+                agent_name=agent_name,  # Required for explicit dispatch - must match dispatch call
             ),
         )
     except KeyboardInterrupt:
