@@ -39,6 +39,10 @@ def verify_env():
     logger.info("✅ All required environment variables are set")
     logger.info(f"   LIVEKIT_URL: {os.getenv('LIVEKIT_URL')}")
     logger.info(f"   LIVEKIT_API_KEY: {os.getenv('LIVEKIT_API_KEY')[:6]}...")
+    cartesia = os.getenv('CARTESIA_API_KEY')
+    eleven = os.getenv('ELEVENLABS_API_KEY')
+    logger.info(f"   CARTESIA_API_KEY: {cartesia[:6] + '...' if cartesia else 'not set'}")
+    logger.info(f"   ELEVENLABS_API_KEY: {eleven[:6] + '...' if eleven else 'not set'}")
     return True
 
 # Backend API configuration

@@ -47,6 +47,15 @@ console.log('');
 
 if (allPresent) {
   console.log('✅ All required environment variables are present!');
+  const optionalVars = ['CARTESIA_API_KEY', 'ELEVENLABS_API_KEY'];
+  for (const varName of optionalVars) {
+    const value = process.env[varName];
+    if (value) {
+      console.log(`✅ ${varName}: ${value.slice(0, 6)}... (${value.length} chars)`);
+    } else {
+      console.log(`ℹ️  ${varName}: not set (will use LiveKit Inference)`);
+    }
+  }
   console.log('\n💡 If you still get errors, try:');
   console.log('   1. Restart the server: npm start');
   console.log('   2. Check for whitespace in .env file');
@@ -56,4 +65,3 @@ if (allPresent) {
   console.error('   Please check your .env file.');
   process.exit(1);
 }
-

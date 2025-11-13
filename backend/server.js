@@ -32,6 +32,17 @@ import { checkEntitlement, incrementFreeTierUsage, FREE_TIER_MINUTES } from './m
 // Log LiveKit configuration after env is loaded and modules are imported
 logLiveKitConfig();
 
+const logTtsProviderConfig = () => {
+  const cartesia = process.env.CARTESIA_API_KEY;
+  const eleven = process.env.ELEVENLABS_API_KEY;
+  console.log('\n🔍 TTS Provider Configuration:');
+  console.log(`   CARTESIA_API_KEY: ${cartesia ? `${cartesia.slice(0, 6)}...` : 'not set'}`);
+  console.log(`   ELEVENLABS_API_KEY: ${eleven ? `${eleven.slice(0, 6)}...` : 'not set'}`);
+  console.log('');
+};
+
+logTtsProviderConfig();
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -438,6 +449,16 @@ app.post('/v1/sessions/start', authenticateToken, async (req, res) => {
     const openAIRealtimeVoices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
     const selectedVoice = voice && typeof voice === 'string' ? voice : 'cartesia/sonic-3:9626c31c-bec5-4cca-baa8-f8ba9e84c8bc';
     const useRealtimeMode = openAIRealtimeVoices.includes(selectedVoice);
+
+    if (!useRealtimeMode) {
+      const provider = selectedVoice.includes('/') ? selectedVoice.split('/')[0] : null;
+      if (provider === 'cartesia' && !process.env.CARTESIA_API_KEY) {
+        console.warn('⚠️  CARTESIA_API_KEY not set, using LiveKit Inference for TTS');
+      }
+      if (provider === 'elevenlabs' && !process.env.ELEVENLABS_API_KEY) {
+        console.warn('⚠️  ELEVENLABS_API_KEY not set, using LiveKit Inference for TTS');
+      }
+    }
 
     // Validate model if provided (optional) - only for hybrid mode (non-realtime)
     // Models use LiveKit Inference provider/model format
