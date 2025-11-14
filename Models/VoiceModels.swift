@@ -19,42 +19,125 @@ enum TTSProvider: String, Codable, CaseIterable {
     }
 }
 
+enum VoiceLanguage: String, Codable, CaseIterable, Identifiable {
+    case englishUS = "en-US"
+    case englishUK = "en-GB"
+    case englishAU = "en-AU"
+    case spanishMexico = "es-MX"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .englishUS: return "English (US)"
+        case .englishUK: return "English (UK)"
+        case .englishAU: return "English (Australia)"
+        case .spanishMexico: return "Spanish (Mexico)"
+        }
+    }
+
+    var localeCode: String { rawValue }
+
+    static var defaultLanguage: VoiceLanguage { .englishUS }
+}
+
 struct TTSVoice: Identifiable, Codable, Equatable {
     let id: String
     let name: String
     let description: String
     let provider: TTSProvider
     let requiresPro: Bool
+    let language: VoiceLanguage
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, description, provider, requiresPro, language
+    }
+
+    init(id: String, name: String, description: String, provider: TTSProvider, requiresPro: Bool, language: VoiceLanguage) {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.provider = provider
+        self.requiresPro = requiresPro
+        self.language = language
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        description = try container.decode(String.self, forKey: .description)
+        provider = try container.decode(TTSProvider.self, forKey: .provider)
+        requiresPro = try container.decode(Bool.self, forKey: .requiresPro)
+        if let decodedLanguage = try container.decodeIfPresent(VoiceLanguage.self, forKey: .language) {
+            language = decodedLanguage
+        } else {
+            language = TTSVoice.language(for: id) ?? .englishUS
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(description, forKey: .description)
+        try container.encode(provider, forKey: .provider)
+        try container.encode(requiresPro, forKey: .requiresPro)
+        try container.encode(language, forKey: .language)
+    }
 
     static let cartesiaVoices: [TTSVoice] = [
-        TTSVoice(id: "cartesia/sonic-3:9626c31c-bec5-4cca-baa8-f8ba9e84c8bc", name: "Jacqueline", description: "Confident young American woman", provider: .cartesia, requiresPro: false),
-        TTSVoice(id: "cartesia/sonic-3:a167e0f3-df7e-4d52-a9c3-f949145efdab", name: "Blake", description: "Energetic American man", provider: .cartesia, requiresPro: false),
-        TTSVoice(id: "cartesia/sonic-3:f31cc6a7-c1e8-4764-980c-60a361443dd1", name: "Robyn", description: "Calm Australian woman", provider: .cartesia, requiresPro: false),
-        TTSVoice(id: "cartesia/sonic-3:5c5ad5e7-1020-476b-8b91-fdcbe9cc313c", name: "Daniela", description: "Warm Mexican woman", provider: .cartesia, requiresPro: false)
+        TTSVoice(id: "cartesia/sonic-3:9626c31c-bec5-4cca-baa8-f8ba9e84c8bc", name: "Jacqueline", description: "Confident young American woman", provider: .cartesia, requiresPro: false, language: .englishUS),
+        TTSVoice(id: "cartesia/sonic-3:a167e0f3-df7e-4d52-a9c3-f949145efdab", name: "Blake", description: "Energetic American man", provider: .cartesia, requiresPro: false, language: .englishUS),
+        TTSVoice(id: "cartesia/sonic-3:f31cc6a7-c1e8-4764-980c-60a361443dd1", name: "Robyn", description: "Calm Australian woman", provider: .cartesia, requiresPro: false, language: .englishAU),
+        TTSVoice(id: "cartesia/sonic-3:5c5ad5e7-1020-476b-8b91-fdcbe9cc313c", name: "Daniela", description: "Warm Mexican woman", provider: .cartesia, requiresPro: false, language: .spanishMexico)
     ]
 
     static let elevenlabsVoices: [TTSVoice] = [
-        TTSVoice(id: "elevenlabs/eleven_turbo_v2_5:cgSgspJ2msm6clMCkdW9", name: "Jessica", description: "Playful American woman", provider: .elevenlabs, requiresPro: false),
-        TTSVoice(id: "elevenlabs/eleven_turbo_v2_5:iP95p4xoKVk53GoZ742B", name: "Chris", description: "Natural American man", provider: .elevenlabs, requiresPro: false),
-        TTSVoice(id: "elevenlabs/eleven_turbo_v2_5:Xb7hH8MSUJpSbSDYk0k2", name: "Alice", description: "Friendly British woman", provider: .elevenlabs, requiresPro: false),
-        TTSVoice(id: "elevenlabs/eleven_turbo_v2_5:cjVigY5qzO86Huf0OWal", name: "Eric", description: "Smooth Mexican man", provider: .elevenlabs, requiresPro: false)
+        TTSVoice(id: "elevenlabs/eleven_turbo_v2_5:cgSgspJ2msm6clMCkdW9", name: "Jessica", description: "Playful American woman", provider: .elevenlabs, requiresPro: false, language: .englishUS),
+        TTSVoice(id: "elevenlabs/eleven_turbo_v2_5:iP95p4xoKVk53GoZ742B", name: "Chris", description: "Natural American man", provider: .elevenlabs, requiresPro: false, language: .englishUS),
+        TTSVoice(id: "elevenlabs/eleven_turbo_v2_5:Xb7hH8MSUJpSbSDYk0k2", name: "Alice", description: "Friendly British woman", provider: .elevenlabs, requiresPro: false, language: .englishUK),
+        TTSVoice(id: "elevenlabs/eleven_turbo_v2_5:cjVigY5qzO86Huf0OWal", name: "Eric", description: "Smooth Mexican man", provider: .elevenlabs, requiresPro: false, language: .spanishMexico)
     ]
 
     static let openaiRealtimeVoices: [TTSVoice] = [
-        TTSVoice(id: "alloy", name: "Alloy", description: "Neutral balanced voice", provider: .openaiRealtime, requiresPro: true),
-        TTSVoice(id: "echo", name: "Echo", description: "Warm friendly voice", provider: .openaiRealtime, requiresPro: true),
-        TTSVoice(id: "fable", name: "Fable", description: "Expressive storytelling voice", provider: .openaiRealtime, requiresPro: true),
-        TTSVoice(id: "onyx", name: "Onyx", description: "Deep authoritative voice", provider: .openaiRealtime, requiresPro: true),
-        TTSVoice(id: "nova", name: "Nova", description: "Clear energetic voice", provider: .openaiRealtime, requiresPro: true),
-        TTSVoice(id: "shimmer", name: "Shimmer", description: "Soft soothing voice", provider: .openaiRealtime, requiresPro: true)
+        TTSVoice(id: "alloy", name: "Alloy", description: "Neutral balanced voice", provider: .openaiRealtime, requiresPro: true, language: .englishUS),
+        TTSVoice(id: "echo", name: "Echo", description: "Warm friendly voice", provider: .openaiRealtime, requiresPro: true, language: .englishUS),
+        TTSVoice(id: "fable", name: "Fable", description: "Expressive storytelling voice", provider: .openaiRealtime, requiresPro: true, language: .englishUS),
+        TTSVoice(id: "onyx", name: "Onyx", description: "Deep authoritative voice", provider: .openaiRealtime, requiresPro: true, language: .englishUS),
+        TTSVoice(id: "nova", name: "Nova", description: "Clear energetic voice", provider: .openaiRealtime, requiresPro: true, language: .englishUS),
+        TTSVoice(id: "shimmer", name: "Shimmer", description: "Soft soothing voice", provider: .openaiRealtime, requiresPro: true, language: .englishUS)
     ]
 
-    static func voices(for provider: TTSProvider) -> [TTSVoice] {
+    static func voices(for provider: TTSProvider, language: VoiceLanguage? = nil) -> [TTSVoice] {
         switch provider {
-        case .cartesia: return cartesiaVoices
-        case .elevenlabs: return elevenlabsVoices
-        case .openaiRealtime: return openaiRealtimeVoices
+        case .cartesia: return filter(voices: cartesiaVoices, language: language)
+        case .elevenlabs: return filter(voices: elevenlabsVoices, language: language)
+        case .openaiRealtime: return filter(voices: openaiRealtimeVoices, language: language)
         }
+    }
+
+    static func voices(for language: VoiceLanguage) -> [TTSVoice] {
+        return allVoices.filter { $0.language == language }
+    }
+    
+    static func availableLanguages() -> [VoiceLanguage] {
+        return VoiceLanguage.allCases.filter { language in
+            !voices(for: language).isEmpty
+        }
+    }
+    
+    static var allVoices: [TTSVoice] {
+        cartesiaVoices + elevenlabsVoices + openaiRealtimeVoices
+    }
+    
+    static func language(for voiceID: String) -> VoiceLanguage? {
+        return allVoices.first(where: { $0.id == voiceID })?.language
+    }
+    
+    private static func filter(voices: [TTSVoice], language: VoiceLanguage?) -> [TTSVoice] {
+        guard let language else { return voices }
+        return voices.filter { $0.language == language }
     }
     
     static let `default` = cartesiaVoices[0]

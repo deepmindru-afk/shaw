@@ -123,6 +123,7 @@ class SessionLogger {
             "context": context.rawValue,
             "model": settings.selectedModel.rawValue,
             "voice": voiceId,
+            "language": settings.selectedLanguage.localeCode,
             "tool_calling_enabled": settings.toolCallingEnabled,
             "web_search_enabled": settings.webSearchEnabled
         ]

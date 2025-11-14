@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from livekit import agents
 from livekit.agents import AgentSession, Agent, RoomInputOptions, function_tool, RunContext
 from livekit.agents import inference
+from livekit.agents import io as agents_io
 from livekit.plugins import openai, cartesia
 
 # Load environment variables from .env file
@@ -50,6 +51,13 @@ def verify_env():
 # Backend API configuration
 BACKEND_URL = os.getenv('BACKEND_URL', 'https://shaw.up.railway.app')
 
+LANGUAGE_DISPLAY_NAMES = {
+    "en-US": "English (US)",
+    "en-GB": "English (UK)",
+    "en-AU": "English (Australia)",
+    "es-MX": "Spanish (Mexico)",
+}
+
 
 class TranscriptManager:
     """Aggregates streamed transcription chunks and saves finalized turns."""
@@ -74,29 +82,74 @@ class TranscriptManager:
             self._maybe_save_turn('user', normalized)
             self._pending_user_partial = None
 
-    def handle_user_final_text(self, text: str | None) -> None:
+    def handle_user_final_text(self, text: object | None) -> None:
         normalized = self._normalize_text(text) or self._pending_user_partial
         if normalized:
             self._maybe_save_turn('user', normalized)
             self._pending_user_partial = None
 
-    def handle_assistant_text(self, text: str | None) -> None:
+    def handle_assistant_text(self, text: object | None) -> None:
         normalized = self._normalize_text(text)
         if normalized:
             self._maybe_save_turn('assistant', normalized)
 
-    def handle_conversation_item(self, role: str | None, content: str | None) -> None:
+    def handle_conversation_item(self, message: object | None) -> None:
+        if not message:
+            return
+        role = getattr(message, 'role', None)
         if role not in ('user', 'assistant'):
             return
+        text_content = getattr(message, 'text_content', None)
+        content = text_content if text_content else getattr(message, 'content', None)
         normalized = self._normalize_text(content)
         if normalized:
             self._maybe_save_turn(role, normalized)
 
-    def _normalize_text(self, text: str | None) -> str:
-        if not text:
+    def _normalize_text(self, text: object | None) -> str:
+        flattened = self._flatten_text(text)
+        if not flattened:
             return ""
-        normalized = " ".join(text.strip().split())
+        normalized = " ".join(flattened.strip().split())
         return normalized
+
+    def _flatten_text(self, value: object | None) -> str:
+        if value is None:
+            return ""
+
+        if hasattr(value, 'text_content'):
+            text_value = getattr(value, 'text_content')
+            if text_value:
+                return text_value
+
+        if isinstance(value, bytes):
+            try:
+                return value.decode('utf-8', errors='ignore')
+            except Exception:
+                return ""
+
+        if isinstance(value, (list, tuple, set)):
+            parts = [self._flatten_text(part) for part in value]
+            return " ".join(part for part in parts if part)
+
+        if isinstance(value, dict):
+            for key in ('text', 'transcript', 'content', 'value'):
+                if key in value and value[key]:
+                    flattened = self._flatten_text(value[key])
+                    if flattened:
+                        return flattened
+            return ""
+
+        for attr in ('text', 'transcript', 'value', 'content'):
+            if hasattr(value, attr):
+                attr_value = getattr(value, attr)
+                flattened = self._flatten_text(attr_value)
+                if flattened:
+                    return flattened
+
+        if not isinstance(value, str):
+            value = str(value)
+
+        return value
 
     def _maybe_save_turn(self, speaker: str, text: str) -> None:
         if not self._session_id or not text:
@@ -125,10 +178,44 @@ class TranscriptManager:
         cache[text] = now
         return False
 
+class AssistantTranscriptSink(agents_io.TextOutput):
+    """Captures assistant text streamed from TTS and forwards it to the transcript manager."""
+
+    def __init__(self, transcript_manager: TranscriptManager):
+        super().__init__(label="assistant_transcript_sink", next_in_chain=None)
+        self._transcript_manager = transcript_manager
+        self._buffer: list[str] = []
+
+    async def capture_text(self, text: str) -> None:
+        if text:
+            self._buffer.append(text)
+
+    def flush(self) -> None:
+        if not self._buffer:
+            return
+
+        combined = "".join(self._buffer).strip()
+        self._buffer.clear()
+
+        if combined:
+            self._transcript_manager.handle_assistant_text(combined)
+
 class Assistant(Agent):
-    def __init__(self, tool_calling_enabled=True, web_search_enabled=True, stt_model: str | None = None, stt_language: str | None = None) -> None:
+    def __init__(
+        self,
+        tool_calling_enabled: bool = True,
+        web_search_enabled: bool = True,
+        preferred_language_name: str | None = None,
+        stt_model: str | None = None,
+        stt_language: str | None = None,
+    ) -> None:
+        language_name = preferred_language_name or "English (US)"
         # Update instructions based on tool availability
-        base_instructions = "You are a helpful voice AI assistant for CarPlay. Keep responses concise, clear, and in English for safe driving. Default to English unless the driver explicitly asks for another language."
+        base_instructions = (
+            f"You are a helpful voice AI assistant for CarPlay. "
+            f"Keep responses concise, clear, and in {language_name} for safe driving. "
+            f"Default to {language_name} unless the driver explicitly asks for another language."
+        )
 
         if tool_calling_enabled and web_search_enabled:
             instructions = base_instructions + " When users ask questions requiring current information (news, weather, traffic, events, facts), use the web_search tool."
@@ -329,8 +416,15 @@ async def entrypoint(ctx: agents.JobContext):
     model = metadata.get('model', 'openai/gpt-4.1-mini')
     tool_calling_enabled = metadata.get('tool_calling_enabled', True)
     web_search_enabled = metadata.get('web_search_enabled', True)
+    language = metadata.get('language', 'en-US')
+    if not isinstance(language, str) or not language:
+        language = 'en-US'
+    language_label = metadata.get('language_label')
+    if not isinstance(language_label, str) or not language_label.strip():
+        language_label = LANGUAGE_DISPLAY_NAMES.get(language, language)
 
     logger.info(f"🔧 Tool settings - Tool calling: {tool_calling_enabled}, Web search: {web_search_enabled}")
+    logger.info(f"🌐 STT language: {language} ({language_label})")
     transcript_manager = TranscriptManager(session_id)
 
     try:
@@ -347,6 +441,7 @@ async def entrypoint(ctx: agents.JobContext):
             )
 
             agent_session = AgentSession(llm=realtime_model)
+            agent_session.output.transcription = AssistantTranscriptSink(transcript_manager)
 
             # Set up event handlers for transcription capture
             # Note: Event handlers must be synchronous - use asyncio.create_task for async work
@@ -356,28 +451,25 @@ async def entrypoint(ctx: agents.JobContext):
 
             @agent_session.on("user_speech_committed")
             def on_user_speech(msg: agents.llm.ChatMessage):
-                if msg.content:
-                    logger.info(f"🗣️ Committed USER speech ({len(msg.content)} chars) — saving turn")
-                    transcript_manager.handle_user_final_text(msg.content)
+                if msg:
+                    text = getattr(msg, "text_content", None)
+                    if text:
+                        logger.info(f"🗣️ Committed USER speech ({len(text)} chars) — saving turn")
+                    transcript_manager.handle_user_final_text(msg)
 
             @agent_session.on("agent_speech_committed")
             def on_agent_speech(msg: agents.llm.ChatMessage):
-                if msg.content:
-                    logger.info(f"🗣️ Committed AGENT speech ({len(msg.content)} chars) — saving turn")
-                    transcript_manager.handle_assistant_text(msg.content)
+                if msg:
+                    text = getattr(msg, "text_content", None)
+                    if text:
+                        logger.info(f"🗣️ Committed AGENT speech ({len(text)} chars) — saving turn")
+                    transcript_manager.handle_assistant_text(msg)
 
             @agent_session.on("conversation_item_added")
-            def on_conversation_item(item):
+            def on_conversation_item(event):
                 try:
-                    role = getattr(item, "role", None)
-                    content = getattr(item, "content", None)
-                    if not content and hasattr(item, "text"):
-                        content = getattr(item, "text")
-                    if not content and hasattr(item, "message") and hasattr(item.message, "content"):
-                        content = getattr(item.message, "content")
-                    if not role:
-                        role = "assistant"
-                    transcript_manager.handle_conversation_item(role, content)
+                    message = getattr(event, "item", None) or event
+                    transcript_manager.handle_conversation_item(message)
                 except Exception as e:
                     logger.error(f"❌ Error handling conversation_item_added: {e}")
 
@@ -389,7 +481,13 @@ async def entrypoint(ctx: agents.JobContext):
             
             await agent_session.start(
                 room=ctx.room,
-                agent=Assistant(tool_calling_enabled=tool_calling_enabled, web_search_enabled=web_search_enabled),
+                agent=Assistant(
+                    tool_calling_enabled=tool_calling_enabled,
+                    web_search_enabled=web_search_enabled,
+                    preferred_language_name=language_label,
+                    stt_model="deepgram/nova-3",
+                    stt_language=language,
+                ),
                 room_input_options=room_input_options,
             )
             
@@ -403,7 +501,7 @@ async def entrypoint(ctx: agents.JobContext):
                     logger.info(f"     Track: {track_pub.name} ({track_pub.kind}) - subscribed: {track_pub.subscribed}")
 
             await agent_session.generate_reply(
-                instructions="Greet the driver briefly in English and ask how you can help them."
+                instructions=f"Greet the driver briefly in {language_label} and ask how you can help them."
             )
 
             logger.info("✅ Full Realtime agent session started successfully")
@@ -431,8 +529,9 @@ async def entrypoint(ctx: agents.JobContext):
             agent_session = AgentSession(
                 llm=llm_model,  # LiveKit Inference LLM (string descriptor)
                 tts=tts_instance,  # TTS plugin instance or LiveKit Inference descriptor
-                stt=inference.STT.from_model_string("deepgram/nova-3:en-US"),
+                stt=inference.STT.from_model_string(f"deepgram/nova-3:{language}"),
             )
+            agent_session.output.transcription = AssistantTranscriptSink(transcript_manager)
 
             # Set up event handlers for transcription capture
             # Note: Event handlers must be synchronous - use asyncio.create_task for async work
@@ -442,26 +541,19 @@ async def entrypoint(ctx: agents.JobContext):
 
             @agent_session.on("user_speech_committed")
             def on_user_speech(msg: agents.llm.ChatMessage):
-                if msg.content:
-                    transcript_manager.handle_user_final_text(msg.content)
+                if msg:
+                    transcript_manager.handle_user_final_text(msg)
 
             @agent_session.on("agent_speech_committed")
             def on_agent_speech(msg: agents.llm.ChatMessage):
-                if msg.content:
-                    transcript_manager.handle_assistant_text(msg.content)
+                if msg:
+                    transcript_manager.handle_assistant_text(msg)
 
             @agent_session.on("conversation_item_added")
-            def on_conversation_item(item):
+            def on_conversation_item(event):
                 try:
-                    role = getattr(item, "role", None)
-                    content = getattr(item, "content", None)
-                    if not content and hasattr(item, "text"):
-                        content = getattr(item, "text")
-                    if not content and hasattr(item, "message") and hasattr(item.message, "content"):
-                        content = getattr(item.message, "content")
-                    if not role:
-                        role = "assistant"
-                    transcript_manager.handle_conversation_item(role, content)
+                    message = getattr(event, "item", None) or event
+                    transcript_manager.handle_conversation_item(message)
                 except Exception as e:
                     logger.error(f"❌ Error handling conversation_item_added: {e}")
 
@@ -476,8 +568,9 @@ async def entrypoint(ctx: agents.JobContext):
                 agent=Assistant(
                     tool_calling_enabled=tool_calling_enabled,
                     web_search_enabled=web_search_enabled,
+                    preferred_language_name=language_label,
                     stt_model="deepgram/nova-3",
-                    stt_language="en-US",
+                    stt_language=language,
                 ),
                 room_input_options=room_input_options,
             )
@@ -492,7 +585,7 @@ async def entrypoint(ctx: agents.JobContext):
                     logger.info(f"     Track: {track_pub.name} ({track_pub.kind}) - subscribed: {track_pub.subscribed}")
 
             await agent_session.generate_reply(
-                instructions="Greet the driver briefly in English and ask how you can help them."
+                instructions=f"Greet the driver briefly in {language_label} and ask how you can help them."
             )
 
             logger.info("✅ Hybrid agent session started successfully")

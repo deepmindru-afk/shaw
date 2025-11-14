@@ -188,10 +188,12 @@ async function verifyAgentJoined(roomName, maxAttempts = 10, delayMs = 500) {
  * @param {boolean} realtime - Whether to use realtime mode
  * @param {boolean} toolCallingEnabled - Whether tool calling is enabled
  * @param {boolean} webSearchEnabled - Whether web search is enabled
+ * @param {string} language - Preferred STT language (e.g. en-US)
+ * @param {string} languageLabel - Human friendly name for the language
  * @param {number} maxRetries - Maximum number of retry attempts
  * @returns {Promise<Object>} - The dispatch object
  */
-async function dispatchAgentWithRetry(roomName, sessionId, model, voice, realtime, toolCallingEnabled, webSearchEnabled, maxRetries = 3) {
+async function dispatchAgentWithRetry(roomName, sessionId, model, voice, realtime, toolCallingEnabled, webSearchEnabled, language, languageLabel, maxRetries = 3) {
   const apiKey = getLiveKitApiKey();
   const apiSecret = getLiveKitApiSecret();
   const url = getLiveKitUrl();
@@ -210,7 +212,9 @@ async function dispatchAgentWithRetry(roomName, sessionId, model, voice, realtim
     voice: voice || (realtime ? 'alloy' : 'cartesia/sonic-3:9626c31c-bec5-4cca-baa8-f8ba9e84c8bc'),
     instructions: 'You are a helpful voice AI assistant for CarPlay. Keep responses concise and clear for safe driving.',
     tool_calling_enabled: toolCallingEnabled !== undefined ? toolCallingEnabled : true,
-    web_search_enabled: webSearchEnabled !== undefined ? webSearchEnabled : true
+    web_search_enabled: webSearchEnabled !== undefined ? webSearchEnabled : true,
+    language: language || 'en-US',
+    language_label: languageLabel || language || 'English (US)'
   });
 
   let lastError;
@@ -246,14 +250,16 @@ async function dispatchAgentWithRetry(roomName, sessionId, model, voice, realtim
  * @param {boolean} realtime - Whether to use realtime mode
  * @param {boolean} toolCallingEnabled - Whether tool calling is enabled
  * @param {boolean} webSearchEnabled - Whether web search is enabled
+ * @param {string} language - Preferred STT language (e.g. en-US)
+ * @param {string} languageLabel - Human friendly name for the language
  * @param {boolean} verifyJoin - Whether to verify the agent joined (default: true)
  * @returns {Promise<Object>} - The dispatch object
  */
-export async function dispatchAgentToRoom(roomName, sessionId, model, voice, realtime, toolCallingEnabled, webSearchEnabled, verifyJoin = true) {
+export async function dispatchAgentToRoom(roomName, sessionId, model, voice, realtime, toolCallingEnabled, webSearchEnabled, language, languageLabel, verifyJoin = true) {
   console.log(`🚀 Starting agent dispatch process for room ${roomName} (session: ${sessionId})`);
   
   // Step 1: Dispatch agent with retry logic
-  const dispatch = await dispatchAgentWithRetry(roomName, sessionId, model, voice, realtime, toolCallingEnabled, webSearchEnabled);
+  const dispatch = await dispatchAgentWithRetry(roomName, sessionId, model, voice, realtime, toolCallingEnabled, webSearchEnabled, language, languageLabel);
   
   // Step 2: Verify agent joined (if enabled)
   if (verifyJoin) {

@@ -32,6 +32,14 @@ class UserSettings: ObservableObject {
         }
     }
 
+    @Published var selectedLanguage: VoiceLanguage {
+        didSet {
+            UserDefaults.standard.set(selectedLanguage.rawValue, forKey: "selectedLanguage")
+            guard !isInitializing else { return }
+            ensureSelectedVoiceMatchesLanguage()
+        }
+    }
+
     @Published var selectedVoice: TTSVoice {
         didSet {
             if let data = try? JSONEncoder().encode(selectedVoice) {
@@ -94,6 +102,13 @@ class UserSettings: ObservableObject {
             self.selectedModel = .gpt5Nano
         }
 
+        if let storedLanguage = UserDefaults.standard.string(forKey: "selectedLanguage"),
+           let language = VoiceLanguage(rawValue: storedLanguage) {
+            self.selectedLanguage = language
+        } else {
+            self.selectedLanguage = VoiceLanguage.defaultLanguage
+        }
+
         // Load selected voice (default to Cartesia Sonic 3)
         if let data = UserDefaults.standard.data(forKey: "selectedVoice"),
            let voice = try? JSONDecoder().decode(TTSVoice.self, from: data) {
@@ -101,6 +116,9 @@ class UserSettings: ObservableObject {
         } else {
             // Default to Cartesia Sonic 3 - Jacqueline
             self.selectedVoice = TTSVoice.default
+        }
+        if self.selectedVoice.language != self.selectedLanguage {
+            self.selectedLanguage = self.selectedVoice.language
         }
 
         // Load tool calling settings (default to enabled)
@@ -120,6 +138,16 @@ class UserSettings: ObservableObject {
         
         // Mark initialization as complete - dependency logic will now apply to future changes
         isInitializing = false
+        ensureSelectedVoiceMatchesLanguage()
+    }
+
+    private func ensureSelectedVoiceMatchesLanguage() {
+        guard selectedVoice.language != selectedLanguage else { return }
+        if let replacement = TTSVoice.voices(for: selectedLanguage).first {
+            selectedVoice = replacement
+        } else {
+            selectedVoice = TTSVoice.default
+            selectedLanguage = TTSVoice.default.language
+        }
     }
 }
-

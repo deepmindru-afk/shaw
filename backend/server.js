@@ -305,8 +305,16 @@ async function generateSummaryAndTitle(sessionId) {
   }
 }
 
+let isSummaryProcessorRunning = false;
+
 // Background job to process pending summaries
-async function processPendingSummaries() {
+async function processPendingSummaries(trigger = 'interval') {
+  if (isSummaryProcessorRunning) {
+    console.log(`⏳ Summary processor already running (trigger: ${trigger}) - skipping new run`);
+    return;
+  }
+
+  isSummaryProcessorRunning = true;
   try {
     // Find sessions that are ended and need summaries
     const stmt = db.prepare(`
@@ -320,7 +328,9 @@ async function processPendingSummaries() {
     const sessions = await stmt.all();
 
     if (sessions.length > 0) {
-      console.log(`🔄 Processing ${sessions.length} pending summary(ies)...`);
+      console.log(`🔄 Processing ${sessions.length} pending summary(ies)... (trigger: ${trigger})`);
+    } else if (trigger !== 'interval') {
+      console.log(`ℹ️ Summary processor triggered by ${trigger} - no pending sessions found`);
     }
 
     for (const session of sessions) {
@@ -328,11 +338,16 @@ async function processPendingSummaries() {
     }
   } catch (error) {
     console.error('❌ Error processing pending summaries:', error);
+  } finally {
+    isSummaryProcessorRunning = false;
   }
 }
 
 // Run summary processor every 30 seconds
-setInterval(processPendingSummaries, 30000);
+setInterval(() => processPendingSummaries('interval'), 30000);
+
+// Kick off processor at startup to handle any pending work immediately
+processPendingSummaries('startup');
 
 // Simple auth middleware (checks Bearer token exists)
 const authenticateToken = (req, res, next) => {
@@ -451,10 +466,23 @@ app.get('/health/agent', async (req, res) => {
 // 1. POST /v1/sessions/start - Start new session
 app.post('/v1/sessions/start', authenticateToken, async (req, res) => {
   try {
-    const { context, model, voice, tool_calling_enabled, web_search_enabled } = req.body;
+    const { context, model, voice, tool_calling_enabled, web_search_enabled, language } = req.body;
 
     if (!context || !['phone', 'carplay'].includes(context)) {
       return res.status(400).json({ error: 'Invalid context' });
+    }
+
+    const supportedLanguages = {
+      'en-US': 'English (US)',
+      'en-GB': 'English (UK)',
+      'en-AU': 'English (Australia)',
+      'es-MX': 'Spanish (Mexico)'
+    };
+    const requestedLanguage = typeof language === 'string' ? language : 'en-US';
+    const normalizedLanguage = supportedLanguages[requestedLanguage] ? requestedLanguage : 'en-US';
+    const languageLabel = supportedLanguages[normalizedLanguage];
+    if (requestedLanguage !== normalizedLanguage) {
+      console.warn(`⚠️  Unsupported language requested (${requestedLanguage}). Defaulting to ${normalizedLanguage}.`);
     }
 
     const deviceId = req.deviceId || req.headers['x-device-id'] || req.userId;
@@ -555,10 +583,22 @@ app.post('/v1/sessions/start', authenticateToken, async (req, res) => {
       console.log(`  Model: ${selectedModel}`);
       console.log(`  TTS voice: ${selectedVoice}`);
     }
+    console.log(`  Language: ${normalizedLanguage} (${languageLabel})`);
 
     // Dispatch agent to room with verification (runs in background, but logs verification results)
     // Verification ensures the agent actually joins before the client starts speaking
-    dispatchAgentToRoom(roomName, sessionId, selectedModel, selectedVoice, useRealtimeMode, tool_calling_enabled, web_search_enabled, true)
+    dispatchAgentToRoom(
+      roomName,
+      sessionId,
+      selectedModel,
+      selectedVoice,
+      useRealtimeMode,
+      tool_calling_enabled,
+      web_search_enabled,
+      normalizedLanguage,
+      languageLabel,
+      true
+    )
       .then(dispatch => {
         console.log(`✅ Agent dispatch completed for session ${sessionId} - dispatch ID: ${dispatch.id}`);
       })
@@ -577,7 +617,8 @@ app.post('/v1/sessions/start', authenticateToken, async (req, res) => {
       room_name: roomName,
       mode: useRealtimeMode ? 'realtime' : 'hybrid',
       model: selectedModel || (useRealtimeMode ? 'openai-realtime' : 'openai/gpt-4.1-mini'),
-      voice: selectedVoice
+      voice: selectedVoice,
+      language: normalizedLanguage
     });
   } catch (error) {
     console.error('Start session error:', error);
@@ -677,6 +718,11 @@ app.post('/v1/sessions/end', authenticateToken, async (req, res) => {
     }
 
     res.status(204).send();
+
+    // Kick summary processor now that the session has ended
+    setTimeout(() => {
+      processPendingSummaries('session_end');
+    }, 0);
   } catch (error) {
     console.error('End session error:', error);
     res.status(500).json({ error: error.message });

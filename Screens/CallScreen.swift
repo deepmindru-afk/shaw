@@ -23,6 +23,27 @@ struct CallScreen: View {
                 if callCoordinator.callState == .idle {
                     Form {
                         Section {
+                            NavigationLink(destination: LanguagePickerView(settings: settings)) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Speaking language")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                        Text(settings.selectedLanguage.displayName)
+                                            .font(.body)
+                                    }
+                                    Spacer()
+                                }
+                            }
+                            .accessibilityLabel("Language: \(settings.selectedLanguage.displayName)")
+                            .accessibilityHint("Double tap to change language")
+                        } header: {
+                            Text("Language")
+                        } footer: {
+                            Text("Filters voice options and updates speech recognition.")
+                        }
+
+                        Section {
                             NavigationLink(destination: VoicePickerView(settings: settings)) {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 2) {
@@ -407,66 +428,133 @@ struct ModelPickerView: View {
     }
 }
 
+struct LanguagePickerView: View {
+    @ObservedObject var settings: UserSettings
+
+    private var languages: [VoiceLanguage] {
+        TTSVoice.availableLanguages()
+    }
+
+    var body: some View {
+        List {
+            if languages.isEmpty {
+                Text("No languages available from the configured voice models.")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+            } else {
+                ForEach(languages) { language in
+                    Button {
+                        HapticFeedbackService.shared.selection()
+                        settings.selectedLanguage = language
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(language.displayName)
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                Text(languageSubtitle(for: language))
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            if settings.selectedLanguage == language {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(.blue)
+                                    .fontWeight(.bold)
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .navigationTitle("Language")
+        .navigationBarTitleDisplayMode(.large)
+    }
+
+    private func languageSubtitle(for language: VoiceLanguage) -> String {
+        let count = TTSVoice.voices(for: language).count
+        if count == 1 {
+            return "1 voice available"
+        } else {
+            return "\(count) voices available"
+        }
+    }
+}
+
 struct VoicePickerView: View {
     @ObservedObject var settings: UserSettings
     @StateObject private var subscriptionManager = SubscriptionManager.shared
 
+    private var providerSections: [(provider: TTSProvider, voices: [TTSVoice])] {
+        TTSProvider.allCases.compactMap { provider in
+            let voices = TTSVoice.voices(for: provider, language: settings.selectedLanguage)
+            return voices.isEmpty ? nil : (provider, voices)
+        }
+    }
+
     var body: some View {
         List {
-            ForEach(TTSProvider.allCases, id: \.self) { provider in
-                let voices = TTSVoice.voices(for: provider)
-                Section {
-                    ForEach(voices) { voice in
-                        Button {
-                            if voice.requiresPro && !subscriptionManager.state.isActive {
-                                // Don't allow selection of Pro voices for non-Pro users
-                                HapticFeedbackService.shared.warning()
-                                return
+            if providerSections.isEmpty {
+                Text("No voices are available for \(settings.selectedLanguage.displayName). Please select another language.")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .padding(.vertical, 8)
+            } else {
+                ForEach(providerSections, id: \.provider) { section in
+                    Section {
+                        ForEach(section.voices) { voice in
+                            Button {
+                                if voice.requiresPro && !subscriptionManager.state.isActive {
+                                    // Don't allow selection of Pro voices for non-Pro users
+                                    HapticFeedbackService.shared.warning()
+                                    return
+                                }
+                                HapticFeedbackService.shared.selection()
+                                settings.selectedVoice = voice
+                            } label: {
+                                VoicePickerRow(
+                                    voice: voice,
+                                    isSelected: settings.selectedVoice.id == voice.id,
+                                    isPro: subscriptionManager.state.isActive
+                                )
                             }
-                            HapticFeedbackService.shared.selection()
-                            settings.selectedVoice = voice
-                        } label: {
-                            VoicePickerRow(
-                                voice: voice,
-                                isSelected: settings.selectedVoice.id == voice.id,
-                                isPro: subscriptionManager.state.isActive
-                            )
+                            .buttonStyle(.plain)
+                            .disabled(voice.requiresPro && !subscriptionManager.state.isActive)
+                            .opacity(voice.requiresPro && !subscriptionManager.state.isActive ? 0.5 : 1.0)
+                            .animation(.easeInOut(duration: 0.2), value: settings.selectedVoice.id)
                         }
-                        .buttonStyle(.plain)
-                        .disabled(voice.requiresPro && !subscriptionManager.state.isActive)
-                        .opacity(voice.requiresPro && !subscriptionManager.state.isActive ? 0.5 : 1.0)
-                        .animation(.easeInOut(duration: 0.2), value: settings.selectedVoice.id)
-                    }
-                } header: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(provider.displayName)
-                            if voices.first?.requiresPro == true {
-                                Text("PRO")
-                                    .font(.caption2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color.blue)
-                                    .cornerRadius(4)
+                    } header: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(section.provider.displayName)
+                                if section.voices.first?.requiresPro == true {
+                                    Text("PRO")
+                                        .font(.caption2)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.blue)
+                                        .cornerRadius(4)
+                                }
                             }
-                        }
-                        if provider == .cartesia {
-                            Text("High-quality, natural voices")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .textCase(.none)
-                        } else if provider == .elevenlabs {
-                            Text("Premium, ultra-realistic voices")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .textCase(.none)
-                        } else if provider == .openaiRealtime {
-                            Text("Highest quality real-time interactions")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .textCase(.none)
+                            if section.provider == .cartesia {
+                                Text("High-quality, natural voices")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .textCase(.none)
+                            } else if section.provider == .elevenlabs {
+                                Text("Premium, ultra-realistic voices")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .textCase(.none)
+                            } else if section.provider == .openaiRealtime {
+                                Text("Highest quality real-time interactions")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .textCase(.none)
+                            }
                         }
                     }
                 }
