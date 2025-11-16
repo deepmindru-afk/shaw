@@ -1,0 +1,6 @@
+*
+!/backend/**
+!/start.sh
+!/railway.json
+!/nixpacks.toml
+!/.gitignore

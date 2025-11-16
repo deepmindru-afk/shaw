@@ -198,6 +198,21 @@ AuthService.shared.setToken("dev-token-12345")
 ### CarPlay Entitlement
 
 1. Go to [Apple Developer Portal](https://developer.apple.com)
+
+## Railway Deployment
+
+The backend now ships with a top-level `start.sh`, `.railwayignore`, and `nixpacks.toml` so Railway can deploy straight from the repo root. Typical flow:
+
+1. Commit & push changes.
+2. Run `railway up --service Backend --path-as-root .` (or set the Root Directory to `.` in the dashboard).
+
+Railway will automatically:
+
+- Use `railway.json` to select the Nixpacks builder.
+- Run the install commands from `nixpacks.toml` (`npm ci` + Python virtualenv + `pip install`).
+- Execute `bash start.sh`, which simply `cd`s into `backend/` and runs the existing `backend/start.sh` that launches the Python agent and Node server.
+
+If you still prefer deploying only `backend/`, you can keep using `--path-as-root backend`, but it's no longer required.
 2. Select your App ID
 3. Enable **CarPlay Communication** capability
 4. Submit request (1-2 weeks approval)
