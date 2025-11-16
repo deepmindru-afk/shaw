@@ -48,11 +48,6 @@ if (fs.existsSync(previewsDir)) {
   console.log(`✅ Serving voice previews from: ${previewsDir}`);
 }
 
-// Helper to conditionally await database calls
-const maybeAwait = (promise) => {
-  return usePostgres ? promise : promise;
-};
-
 const normalizeBoolean = (value) => {
   if (typeof value === 'boolean') return value;
   if (typeof value === 'number') return value !== 0;
@@ -64,8 +59,9 @@ const normalizeBoolean = (value) => {
 
 const normalizeSession = (session) => {
   if (!session) return null;
+  const { agent_secret, ...rest } = session;
   return {
-    ...session,
+    ...rest,
     logging_enabled_snapshot: normalizeBoolean(session.logging_enabled_snapshot)
   };
 };
@@ -157,95 +153,77 @@ async function generateSummaryAndTitle(sessionId) {
     // Format transcript
     const transcript = turns.map(t => `${t.speaker}: ${t.text}`).join('\n');
 
-    // Generate summary using GPT-5 nano
-    const summaryResponse = await openai.chat.completions.create({
+    // Generate summary, action items, title, and tags with one Responses API call
+    const summaryResponse = await openai.responses.create({
       model: 'gpt-5-nano',
-      messages: [
+      temperature: 0.35,
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'session_summary',
+          strict: true,
+          schema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              summary: { type: 'string' },
+              action_items: {
+                type: 'array',
+                items: { type: 'string' }
+              },
+              title: { type: 'string' },
+              tags: {
+                type: 'array',
+                minItems: 0,
+                maxItems: 5,
+                items: { type: 'string' }
+              }
+            },
+            required: ['summary', 'action_items', 'title', 'tags']
+          }
+        }
+      },
+      input: [
         {
           role: 'system',
-          content: 'You are a helpful assistant that summarizes voice conversations. Provide a concise summary that captures the key topics, decisions, and action items discussed.'
+          content: [
+            {
+              type: 'text',
+              text: 'You are a helpful assistant that summarizes driver conversations. Return concise JSON with: summary (2-3 sentences), action_items (array of short bullet texts), title (3-6 words, no quotes), and tags (2-5 short topical labels).'
+            }
+          ]
         },
         {
           role: 'user',
-          content: `Summarize this conversation:\n\n${transcript}`
+          content: [
+            {
+              type: 'text',
+              text: `Create the JSON summary payload from this transcript:\n\n${transcript}`
+            }
+          ]
         }
-      ],
-      temperature: 0.3,
-      max_tokens: 500
+      ]
     });
 
-    const summaryText = summaryResponse.choices[0].message.content;
+    const responseContent = summaryResponse.output?.[0]?.content || [];
+    const jsonText = responseContent.find(item => item.type === 'output_text')?.text?.trim();
 
-    // Extract action items
-    const actionItemsResponse = await openai.chat.completions.create({
-      model: 'gpt-5-nano',
-      messages: [
-        {
-          role: 'system',
-          content: 'Extract action items from the summary as a JSON array of strings. If there are no action items, return an empty array.'
-        },
-        {
-          role: 'user',
-          content: summaryText
-        }
-      ],
-      temperature: 0.2,
-      max_tokens: 200,
-      response_format: { type: 'json_object' }
-    });
-
-    let actionItems = [];
-    try {
-      const parsed = JSON.parse(actionItemsResponse.choices[0].message.content);
-      actionItems = parsed.action_items || parsed.actions || [];
-    } catch (e) {
-      console.warn('Failed to parse action items:', e);
+    if (!jsonText) {
+      throw new Error('OpenAI Responses API returned no content for summary generation');
     }
 
-    // Generate title from summary
-    const titleResponse = await openai.chat.completions.create({
-      model: 'gpt-5-nano',
-      messages: [
-        {
-          role: 'system',
-          content: 'Generate a short, descriptive title (3-6 words) for this conversation summary. Return only the title, no quotes or extra text.'
-        },
-        {
-          role: 'user',
-          content: summaryText
-        }
-      ],
-      temperature: 0.5,
-      max_tokens: 20
-    });
-
-    const title = titleResponse.choices[0].message.content.trim().replace(/^["']|["']$/g, '');
-
-    // Generate tags
-    const tagsResponse = await openai.chat.completions.create({
-      model: 'gpt-5-nano',
-      messages: [
-        {
-          role: 'system',
-          content: 'Extract 2-5 relevant topic tags from the summary as a JSON array of strings.'
-        },
-        {
-          role: 'user',
-          content: summaryText
-        }
-      ],
-      temperature: 0.3,
-      max_tokens: 100,
-      response_format: { type: 'json_object' }
-    });
-
-    let tags = [];
+    let summaryPayload;
     try {
-      const parsed = JSON.parse(tagsResponse.choices[0].message.content);
-      tags = parsed.tags || [];
-    } catch (e) {
-      console.warn('Failed to parse tags:', e);
+      summaryPayload = JSON.parse(jsonText);
+    } catch (error) {
+      console.error('❌ Failed to parse summary payload:', jsonText);
+      throw error;
     }
+
+    const summaryText = summaryPayload.summary?.trim() || 'Summary unavailable.';
+    const actionItems = Array.isArray(summaryPayload.action_items) ? summaryPayload.action_items : [];
+    const title = (summaryPayload.title || 'Conversation Summary').trim().replace(/^["']|["']$/g, '');
+    const tags = Array.isArray(summaryPayload.tags) ? summaryPayload.tags : [];
 
     // Save summary to database
     const summaryId = crypto.randomUUID();
@@ -391,13 +369,25 @@ app.post('/v1/sessions/start', authenticateToken, async (req, res) => {
     const sessionId = `session-${crypto.randomUUID()}`;
     const roomName = generateRoomName();
     const participantName = `${req.userId}-${Date.now()}`;
+    const agentSecret = crypto.randomBytes(32).toString('hex');
 
     const livekitToken = await generateLiveKitToken(roomName, participantName);
     const livekitUrl = getLiveKitUrl();
 
     const stmt = db.prepare(`
-      INSERT INTO sessions (id, user_id, context, started_at, logging_enabled_snapshot, summary_status, model, original_transaction_id, entitlement_checked_at)
-      VALUES (?, ?, ?, ?, ${usePostgres ? 'true' : '1'}, 'pending', ?, ?, ?)
+      INSERT INTO sessions (
+        id,
+        user_id,
+        context,
+        started_at,
+        logging_enabled_snapshot,
+        summary_status,
+        model,
+        original_transaction_id,
+        entitlement_checked_at,
+        agent_secret
+      )
+      VALUES (?, ?, ?, ?, ${usePostgres ? 'true' : '1'}, 'pending', ?, ?, ?, ?)
     `);
     await stmt.run(
       sessionId,
@@ -406,7 +396,8 @@ app.post('/v1/sessions/start', authenticateToken, async (req, res) => {
       new Date().toISOString(),
       rawModel,
       entitlementCheck.originalTransactionId || null,
-      new Date().toISOString()
+      new Date().toISOString(),
+      agentSecret
     );
 
     console.log(`Session ${sessionId} started in HYBRID mode`);
@@ -422,6 +413,7 @@ app.post('/v1/sessions/start', authenticateToken, async (req, res) => {
       toolCallingEnabled,
       webSearchEnabled,
       language: preferredLanguage,
+      agentSecret,
     }).catch(error => {
       console.error(`Failed to dispatch agent for session ${sessionId}:`, error.message);
     });
@@ -538,22 +530,27 @@ app.post('/v1/sessions/end', authenticateToken, async (req, res) => {
   }
 });
 
-// 3. POST /v1/sessions/{id}/turns - Log conversation turn (no auth for agent)
+// 3. POST /v1/sessions/{id}/turns - Log conversation turn (secured via agent secret)
 app.post('/v1/sessions/:id/turns', (req, res) => {
   try {
     const sessionId = req.params.id;
     const { speaker, text, timestamp } = req.body;
+    const agentSecret = req.headers['x-agent-secret'];
 
     if (!speaker || !text || !['user', 'assistant'].includes(speaker)) {
       return res.status(400).json({ error: 'Invalid turn data' });
     }
 
-    // Verify session exists (no user check since agent is calling this)
-    const session = db.prepare('SELECT id FROM sessions WHERE id = ?')
-      .get(sessionId);
+    if (!agentSecret) {
+      return res.status(401).json({ error: 'Missing agent secret' });
+    }
+
+    // Verify session exists and secret matches (no user check since agent is calling this)
+    const session = db.prepare('SELECT id FROM sessions WHERE id = ? AND agent_secret = ?')
+      .get(sessionId, agentSecret);
 
     if (!session) {
-      return res.status(404).json({ error: 'Session not found' });
+      return res.status(401).json({ error: 'Invalid agent secret or session' });
     }
 
     const turnId = `turn-${crypto.randomUUID()}`;

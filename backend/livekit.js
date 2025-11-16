@@ -1,4 +1,4 @@
-import { AccessToken, RoomServiceClient, AgentDispatchClient } from 'livekit-server-sdk';
+import { AccessToken, AgentDispatchClient } from 'livekit-server-sdk';
 import crypto from 'crypto';
 
 // Read environment variables lazily to ensure dotenv has loaded them
@@ -91,6 +91,7 @@ export async function dispatchAgentToRoom({
   toolCallingEnabled,
   webSearchEnabled,
   language,
+  agentSecret,
 }) {
   const apiKey = getLiveKitApiKey();
   const apiSecret = getLiveKitApiSecret();
@@ -104,8 +105,8 @@ export async function dispatchAgentToRoom({
   const agentDispatchClient = new AgentDispatchClient(url, apiKey, apiSecret);
 
   // Agent metadata to pass to the LiveKit agent
-  if (!sessionId || !model || !voice) {
-    throw new Error('Agent dispatch requires sessionId, model, and voice');
+  if (!sessionId || !model || !voice || !agentSecret) {
+    throw new Error('Agent dispatch requires sessionId, model, voice, and agent secret');
   }
 
   const agentMetadata = JSON.stringify({
@@ -113,6 +114,7 @@ export async function dispatchAgentToRoom({
     model,
     voice,
     language,
+    agent_secret: agentSecret,
     tool_calling_enabled: toolCallingEnabled !== undefined ? toolCallingEnabled : true,
     web_search_enabled: webSearchEnabled !== undefined ? webSearchEnabled : true,
   });

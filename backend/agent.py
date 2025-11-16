@@ -64,7 +64,10 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-BACKEND_URL = os.getenv('BACKEND_URL', 'https://shaw.up.railway.app')
+BACKEND_URL = os.getenv('BACKEND_URL')
+if not BACKEND_URL:
+    logger.error('BACKEND_URL environment variable is required for the agent to log turns.')
+    raise RuntimeError('Set BACKEND_URL before starting the LiveKit agent worker.')
 DEFAULT_VOICE = 'cartesia/sonic-3:9626c31c-bec5-4cca-baa8-f8ba9e84c8bc'
 DEFAULT_TEMPERATURE = float(os.getenv('LLM_TEMPERATURE', '0.6'))
 DEFAULT_MAX_TOKENS = int(os.getenv('LLM_MAX_OUTPUT_TOKENS', '1024'))
@@ -95,6 +98,7 @@ class SessionMetadata:
     session_id: str
     model: str
     voice: str
+    agent_secret: str
     tool_calling_enabled: bool = True
     web_search_enabled: bool = True
     language: Optional[str] = None
@@ -104,14 +108,16 @@ class SessionMetadata:
         session_id = payload.get('session_id')
         model = payload.get('model')
         voice = payload.get('voice', DEFAULT_VOICE)
+        agent_secret = payload.get('agent_secret')
 
-        if not session_id or not model or not voice:
-            raise ValueError('Dispatch metadata must include session_id, model, and voice')
+        if not session_id or not model or not voice or not agent_secret:
+            raise ValueError('Dispatch metadata must include session_id, model, voice, and agent_secret')
 
         return cls(
             session_id=session_id,
             model=model,
             voice=voice,
+            agent_secret=agent_secret,
             tool_calling_enabled=_to_bool(payload.get('tool_calling_enabled', True), True),
             web_search_enabled=_to_bool(payload.get('web_search_enabled', True), True),
             language=payload.get('language'),
@@ -790,8 +796,8 @@ class Assistant(Agent):
             return "Search is temporarily unavailable."
 
 
-async def save_turn(session_id: str, speaker: str, text: str) -> None:
-    if not session_id or not text.strip():
+async def save_turn(session_id: str, agent_secret: str, speaker: str, text: str) -> None:
+    if not session_id or not agent_secret or not text.strip():
         return
 
     try:
@@ -800,7 +806,10 @@ async def save_turn(session_id: str, speaker: str, text: str) -> None:
             async with session.post(
                 url,
                 json={'speaker': speaker, 'text': text.strip()},
-                headers={'Content-Type': 'application/json'},
+                headers={
+                    'Content-Type': 'application/json',
+                    'x-agent-secret': agent_secret,
+                },
             ) as response:
                 if response.status != 201:
                     error_text = await response.text()
@@ -874,12 +883,12 @@ async def entrypoint(ctx: agents.JobContext) -> None:
     @agent_session.on('user_speech_committed')
     async def _on_user_speech(message: llm.ChatMessage) -> None:
         if message.content:
-            await save_turn(config.session_id, 'user', message.content)
+            await save_turn(config.session_id, config.agent_secret, 'user', message.content)
 
     @agent_session.on('agent_speech_committed')
     async def _on_agent_speech(message: llm.ChatMessage) -> None:
         if message.content:
-            await save_turn(config.session_id, 'assistant', message.content)
+            await save_turn(config.session_id, config.agent_secret, 'assistant', message.content)
 
     await agent_session.start(
         room=ctx.room,
