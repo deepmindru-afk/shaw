@@ -1,0 +1,75 @@
+{
+  "previewText": "Hello, this is a preview of my voice. How do I sound?",
+  "voices": [
+    {
+      "id": "cartesia-katie",
+      "tts": "cartesia/sonic-3:f786b574-daa5-4673-aa0c-cbe3e8534c02",
+      "provider": "cartesia",
+      "name": "Katie",
+      "description": "Professional female voice for agents"
+    },
+    {
+      "id": "cartesia-kiefer",
+      "tts": "cartesia/sonic-3:228fca29-3a0a-435c-8728-5cb483251068",
+      "provider": "cartesia",
+      "name": "Kiefer",
+      "description": "Professional male voice for agents"
+    },
+    {
+      "id": "cartesia-tessa",
+      "tts": "cartesia/sonic-3:6ccbfb76-1fc6-48f7-b71d-91ac6298247b",
+      "provider": "cartesia",
+      "name": "Tessa",
+      "description": "Expressive and emotive female voice"
+    },
+    {
+      "id": "cartesia-kyle",
+      "tts": "cartesia/sonic-3:c961b81c-a935-4c17-bfb3-ba2239de8c2f",
+      "provider": "cartesia",
+      "name": "Kyle",
+      "description": "Expressive and emotive male voice"
+    },
+    {
+      "id": "elevenlabs-rachel",
+      "tts": "elevenlabs/eleven_turbo_v2_5:21m00Tcm4TlvDq8ikWAM",
+      "provider": "elevenlabs",
+      "name": "Rachel",
+      "description": "Professional female voice"
+    },
+    {
+      "id": "elevenlabs-clyde",
+      "tts": "elevenlabs/eleven_turbo_v2_5:2EiwWnXFnvU5JabPnv8n",
+      "provider": "elevenlabs",
+      "name": "Clyde",
+      "description": "Great for character use-cases"
+    },
+    {
+      "id": "elevenlabs-roger",
+      "tts": "elevenlabs/eleven_turbo_v2_5:CwhRBWXzGAHq8TQ4Fs17",
+      "provider": "elevenlabs",
+      "name": "Roger",
+      "description": "Easy going, perfect for casual conversations"
+    },
+    {
+      "id": "elevenlabs-sarah",
+      "tts": "elevenlabs/eleven_turbo_v2_5:EXAVITQu4vr4xnSDxMaL",
+      "provider": "elevenlabs",
+      "name": "Sarah",
+      "description": "Confident and warm young adult woman"
+    },
+    {
+      "id": "elevenlabs-laura",
+      "tts": "elevenlabs/eleven_turbo_v2_5:FGY2WhTYpPnrIDTdsKH5",
+      "provider": "elevenlabs",
+      "name": "Laura",
+      "description": "Young adult female, delivers sunny upbeat energy"
+    },
+    {
+      "id": "elevenlabs-charlie",
+      "tts": "elevenlabs/eleven_turbo_v2_5:IKne3meq5aSn9XLyUdCD",
+      "provider": "elevenlabs",
+      "name": "Charlie",
+      "description": "Young Australian male, confident and natural"
+    }
+  ]
+}

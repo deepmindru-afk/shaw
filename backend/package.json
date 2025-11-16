@@ -1,0 +1,31 @@
+{
+  "name": "ai-voice-copilot-backend",
+  "version": "1.0.0",
+  "description": "Backend API for AI Voice Copilot iOS app",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "generate-previews": "node scripts/generate-voice-previews.js"
+  },
+  "keywords": [
+    "livekit",
+    "voice",
+    "ai",
+    "ios"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^9.2.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "livekit-server-sdk": "^2.0.0",
+    "node-jose": "^2.2.0",
+    "openai": "^6.8.1",
+    "pg": "^8.16.3"
+  }
+}
