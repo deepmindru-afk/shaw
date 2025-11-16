@@ -38,7 +38,10 @@ final class LiveKitService: @unchecked Sendable {
 
                 room.add(delegate: self)
 
-                try await room.connect(url: url, token: token)
+                let normalizedURL = Self.normalizedLiveKitURL(from: url)
+                print("🔗 Connecting to LiveKit at \(normalizedURL)")
+
+                try await room.connect(url: normalizedURL, token: token)
                 print("✅ LiveKit room.connect() completed successfully")
                 print("📡 Room state: \(room.connectionState)")
 
@@ -57,6 +60,19 @@ final class LiveKitService: @unchecked Sendable {
                 self.delegate?.liveKitServiceDidFail(error: error)
             }
         }
+    }
+
+    private static func normalizedLiveKitURL(from rawURL: String) -> String {
+        if rawURL.hasPrefix("ws://") || rawURL.hasPrefix("wss://") {
+            return rawURL
+        }
+        if rawURL.hasPrefix("https://") {
+            return "wss://" + rawURL.dropFirst("https://".count)
+        }
+        if rawURL.hasPrefix("http://") {
+            return "ws://" + rawURL.dropFirst("http://".count)
+        }
+        return "wss://" + rawURL
     }
 
     func disconnect() {

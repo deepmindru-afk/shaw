@@ -32,8 +32,25 @@
             </array>
         </dict>
     </dict>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>AI Voice Copilot needs access to your microphone to enable voice conversations with your AI assistant.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>AI Voice Copilot needs access to your microphone to enable voice conversations with your AI assistant.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is required to initialize the LiveKit media pipeline, even though only microphone audio is captured.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>livekit.cloud</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
+				<key>NSTemporaryExceptionMinimumTLSVersion</key>
+				<string>TLSv1.2</string>
+			</dict>
+		</dict>
+	</dict>
     <key>UIBackgroundModes</key>
     <array>
         <string>audio</string>
