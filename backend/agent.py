@@ -768,7 +768,10 @@ async def entrypoint(ctx: agents.JobContext):
     logger.info(f"🎙️  Agent entrypoint called!")
     logger.info(f"   Room name: {ctx.room.name}")
     logger.info(f"   Job ID: {ctx.job.id}")
-    logger.info(f"   Job metadata: {ctx.job.metadata}")
+    try:
+        logger.info(f"   Job metadata: {ctx.job.metadata}")
+    except Exception:
+        logger.info(f"   Job metadata: (unprintable)")
     logger.info("=" * 60)
     
     # Note: Room is NOT connected yet - AgentSession.start() will connect automatically
@@ -956,4 +959,29 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"❌ Agent worker failed to start: {e}")
         logger.exception("Full error details:")
+        sys.exit(1)
+if __name__ == "__main__":
+    # Flush stdout immediately to ensure logs are captured
+    sys.stdout.reconfigure(line_buffering=True)
+    
+    logger.info("🚀 Agent worker process starting...")
+    logger.info(f"   Python: {sys.version}")
+    logger.info(f"   CWD: {os.getcwd()}")
+    
+    if not verify_env():
+        logger.error("❌ Environment verification failed - exiting")
+        sys.exit(1)
+
+    try:
+        # Initialize the worker
+        logger.info("🔌 Connecting to LiveKit Cloud...")
+        cli.run_app(
+            WorkerOptions(
+                entrypoint_fnc=entrypoint,
+                # Use a specific worker label if needed
+                # worker_label="roadtrip-agent",
+            )
+        )
+    except Exception as e:
+        logger.critical(f"❌ Unhandled exception in agent worker: {e}", exc_info=True)
         sys.exit(1)

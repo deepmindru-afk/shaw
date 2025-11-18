@@ -31,7 +31,7 @@ export function logLiveKitConfig() {
   const apiKey = getLiveKitApiKey();
   const apiSecret = getLiveKitApiSecret();
   const url = getLiveKitUrlValue();
-  
+
   console.log('🔑 LiveKit Config:', {
     apiKey: apiKey ? `${apiKey.slice(0, 6)}...` : 'NOT SET',
     apiSecret: apiSecret ? 'SET' : 'NOT SET',
@@ -47,7 +47,7 @@ export async function generateLiveKitToken(roomName, participantName) {
   // Read credentials lazily
   const apiKey = getLiveKitApiKey();
   const apiSecret = getLiveKitApiSecret();
-  
+
   // More detailed error checking
   if (!apiKey) {
     console.error('❌ LIVEKIT_API_KEY is missing');
@@ -88,6 +88,66 @@ function getLiveKitApiUrl() {
   return url.replace('wss://', 'https://').replace('ws://', 'http://');
 }
 
+
+const DEFAULT_AGENT_NAME = 'agent';
+const BASIC_AGENT_IDENTITIES = ['agent', 'assistant', 'roadtrip-voice-assistant'];
+const AGENT_IDENTITY_KEYWORDS = ['voice-assistant', 'voiceassistant', 'roadtrip'];
+
+const normalizeIdentity = (identity) => (identity || '').trim().toLowerCase();
+
+export function getAgentName() {
+  const configured = process.env.LIVEKIT_AGENT_NAME;
+  if (typeof configured === 'string') {
+    const trimmed = configured.trim();
+    if (trimmed.length > 0) {
+      return trimmed;
+    }
+  }
+  return DEFAULT_AGENT_NAME;
+}
+
+export function isLikelyAgentParticipant(identity, expectedIdentity) {
+  const normalizedIdentity = normalizeIdentity(identity);
+  if (!normalizedIdentity) {
+    return false;
+  }
+
+  // Skip obvious user/device identities before applying fuzzy agent checks
+  if (normalizedIdentity.startsWith('user-') || normalizedIdentity.startsWith('device-')) {
+    return false;
+  }
+
+  const normalizedExpected = normalizeIdentity(expectedIdentity);
+  if (normalizedExpected) {
+    if (normalizedIdentity === normalizedExpected) {
+      return true;
+    }
+    // LiveKit often appends suffixes to the agent identity (e.g. "agent-abc123")
+    if (normalizedIdentity.startsWith(`${normalizedExpected}-`)) {
+      return true;
+    }
+  }
+
+  // Handle generic agent identities like "agent-xyz" / "assistant-123"
+  if (BASIC_AGENT_IDENTITIES.some(name => normalizedIdentity === name || normalizedIdentity.startsWith(`${name}-`))) {
+    return true;
+  }
+
+  // Fall back to keyword-based heuristics for new agent names
+  if (normalizedExpected && normalizedIdentity.includes(normalizedExpected)) {
+    return true;
+  }
+  return AGENT_IDENTITY_KEYWORDS.some(keyword => normalizedIdentity.includes(keyword));
+}
+
+function getAgentVerificationTargets(expectedIdentity) {
+  const normalizedExpected = normalizeIdentity(expectedIdentity);
+  if (normalizedExpected) {
+    return [normalizedExpected];
+  }
+  return BASIC_AGENT_IDENTITIES;
+}
+
 /**
  * Verify that an agent participant has joined the room
  * @param {string} roomName - The room name to check
@@ -95,7 +155,7 @@ function getLiveKitApiUrl() {
  * @param {number} delayMs - Delay between attempts in milliseconds
  * @returns {Promise<boolean>} - True if agent found, false otherwise
  */
-async function verifyAgentJoined(roomName, maxAttempts = 10, delayMs = 500) {
+async function verifyAgentJoined(roomName, maxAttempts = 10, delayMs = 500, expectedIdentity) {
   const apiKey = getLiveKitApiKey();
   const apiSecret = getLiveKitApiSecret();
   const url = getLiveKitUrl();
@@ -113,7 +173,7 @@ async function verifyAgentJoined(roomName, maxAttempts = 10, delayMs = 500) {
       // Note: listRooms() returns all rooms, we filter for the one we want
       const rooms = await roomService.listRooms();
       const room = rooms && rooms.find ? rooms.find(r => r.name === roomName) : null;
-      
+
       if (!room) {
         // Room may not exist yet - LiveKit creates rooms automatically when participants join
         // This is normal, we'll keep checking
@@ -124,42 +184,32 @@ async function verifyAgentJoined(roomName, maxAttempts = 10, delayMs = 500) {
 
       // Get participants for this room
       const participants = await roomService.listParticipants(roomName);
-      
-      // Check for agent participants
-      // LiveKit agents can have various identity formats, so we check for common patterns
-      
+
+      const verificationTargets = getAgentVerificationTargets(expectedIdentity);
+      if (attempt === 1 || attempt % 5 === 0) {
+        console.log(`🔎 Expecting agent identity in room ${roomName}: ${verificationTargets.join(', ')}`);
+      }
+
       // Log all participants for debugging
       if (participants && participants.length > 0) {
-        console.log(`👥 Room ${roomName} has ${participants.length} participant(s):`);
-        participants.forEach(p => {
-          console.log(`   - ${p.identity || 'unknown'} (SID: ${p.sid || 'unknown'})`);
-        });
+        const participantList = participants.map(p => `${p.identity} (${p.state})`).join(', ');
+        console.log(`👥 Room ${roomName} participants [${attempt}/${maxAttempts}]: ${participantList}`);
       }
-      
+
       // Look for agent participant - check multiple patterns
-      const agentParticipant = participants && participants.find ? participants.find(p => {
-        const identity = (p.identity || '').toLowerCase();
-        return (
-          identity.startsWith('agent') || 
-          identity.includes('agent') ||
-          identity.startsWith('assistant') ||
-          identity.includes('assistant') ||
-          // LiveKit agents sometimes use the agent name as identity
-          identity === 'agent' ||
-          // Check if it's not a typical client identity (clients usually have user- prefix or device- prefix)
-          (!identity.startsWith('user-') && !identity.startsWith('device-') && identity.length > 0)
-        );
-      }) : null;
+      const agentParticipant = participants && participants.find
+        ? participants.find(p => isLikelyAgentParticipant(p.identity, expectedIdentity))
+        : null;
 
       if (agentParticipant) {
-        console.log(`✅ Agent verified in room ${roomName}: ${agentParticipant.identity} (SID: ${agentParticipant.sid})`);
+        console.log(`✅ Agent verified in room ${roomName}: ${agentParticipant.identity} (SID: ${agentParticipant.sid}, State: ${agentParticipant.state})`);
+        // Optional: Check if state is connected?
         return true;
       }
 
       // If we have participants but none match agent patterns, log them for debugging
       if (participants && participants.length > 0) {
-        console.log(`⏳ [${attempt}/${maxAttempts}] Found ${participants.length} participant(s) but none match agent patterns`);
-        console.log(`   Participant identities: ${participants.map(p => p.identity || 'unknown').join(', ')}`);
+        // console.log(`⏳ [${attempt}/${maxAttempts}] Found ${participants.length} participant(s) but none matched the expected agent identity`);
       } else {
         console.log(`⏳ [${attempt}/${maxAttempts}] No participants found in room ${roomName} yet`);
       }
@@ -215,18 +265,20 @@ async function dispatchAgentWithRetry(roomName, sessionId, model, voice, toolCal
     language_label: languageLabel || language || 'English (US)'
   });
 
+  const agentName = getAgentName();
+
   let lastError;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`📡 Dispatching agent to room ${roomName} (attempt ${attempt}/${maxRetries})...`);
-      const agentName = process.env.LIVEKIT_AGENT_NAME || 'agent';
+      console.log(`   Agent identity: ${agentName}`);
       const dispatch = await agentDispatchClient.createDispatch(roomName, agentName, { metadata: agentMetadata });
-      console.log(`✅ Agent dispatched to room ${roomName}:`, dispatch.id);
-      return dispatch;
+      console.log(`✅ Agent dispatched to room ${roomName} as "${agentName}":`, dispatch.id);
+      return { dispatch, agentName };
     } catch (error) {
       lastError = error;
       console.error(`❌ Failed to dispatch agent (attempt ${attempt}/${maxRetries}):`, error.message);
-      
+
       if (attempt < maxRetries) {
         const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Exponential backoff, max 5s
         console.log(`⏳ Retrying in ${delayMs}ms...`);
@@ -254,21 +306,29 @@ async function dispatchAgentWithRetry(roomName, sessionId, model, voice, toolCal
  */
 export async function dispatchAgentToRoom(roomName, sessionId, model, voice, toolCallingEnabled, webSearchEnabled, language, languageLabel, verifyJoin = true) {
   console.log(`🚀 Starting agent dispatch process for room ${roomName} (session: ${sessionId})`);
-  
+
   // Step 1: Dispatch agent with retry logic
-  const dispatch = await dispatchAgentWithRetry(roomName, sessionId, model, voice, toolCallingEnabled, webSearchEnabled, language, languageLabel);
-  
+  const { dispatch, agentName } = await dispatchAgentWithRetry(roomName, sessionId, model, voice, toolCallingEnabled, webSearchEnabled, language, languageLabel);
+
   // Step 2: Verify agent joined (if enabled)
   if (verifyJoin) {
     console.log(`🔍 Verifying agent joined room ${roomName}...`);
-    const agentJoined = await verifyAgentJoined(roomName, 15, 500); // Check up to 15 times with 500ms delay (7.5s total)
-    
+    const agentJoined = await verifyAgentJoined(
+      roomName,
+      15,
+      500,
+      agentName
+    ); // Check up to 15 times with 500ms delay (7.5s total)
+
     if (!agentJoined) {
       const errorMessage = `Agent dispatch succeeded but agent did not join room ${roomName}`;
       console.error(`❌ CRITICAL: ${errorMessage}`);
       console.error(`   Dispatch ID: ${dispatch.id}`);
       console.error(`   This may indicate the agent worker is not running or not responding to dispatches`);
       console.error(`   Check agent logs: tail -f /tmp/agent.log`);
+
+      // OPTIONAL: We could choose to NOT throw here and let the client try to connect anyway
+      // But for now, we'll stick to the strict behavior but with better logging
       const error = new Error('AGENT_JOIN_TIMEOUT');
       error.details = { roomName, sessionId, dispatchId: dispatch.id };
       throw error;
@@ -278,6 +338,6 @@ export async function dispatchAgentToRoom(roomName, sessionId, model, voice, too
   } else {
     console.log(`⚠️  Agent join verification skipped (verifyJoin=false)`);
   }
-  
+
   return dispatch;
 }
