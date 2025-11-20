@@ -76,13 +76,18 @@ LANGUAGE_DISPLAY_NAMES = {
     "es-MX": "Spanish (Mexico)",
 }
 
-DEFAULT_OPENAI_CHAT_MODEL = "gpt-5.1-nano"
+DEFAULT_OPENAI_CHAT_MODEL = "gpt-4o-mini"
 
 def resolve_openai_chat_model(model: str | None) -> str:
     """Convert internal identifiers (e.g. openai/gpt-5.1-nano) to OpenAI chat model names."""
     normalized = (model or "").strip()
     if not normalized:
         return DEFAULT_OPENAI_CHAT_MODEL
+
+    # Legacy LiveKit descriptors mapped to current Chat Completions models
+    if normalized in ("gpt-5.1-nano", "gpt-5.1-mini", "gpt-5.1"):
+        logger.warning(f"⚠️  Model {normalized} not available on Chat Completions; using gpt-4o-mini instead")
+        return "gpt-4o-mini"
 
     if normalized.startswith("openai/"):
         return normalized.split("/", 1)[1]
