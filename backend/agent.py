@@ -860,8 +860,11 @@ async def entrypoint(ctx: agents.JobContext):
         
         if isinstance(tts_instance, str):
             logger.info(f"📢 Using LiveKit Inference TTS (counts against connection limit)")
+            logger.info(f"   TTS descriptor: {tts_instance}")
         else:
+            provider_name = tts_instance.__class__.__module__.split(".")[-1]
             logger.info(f"📢 Using TTS plugin directly (does NOT count against LiveKit Inference limit)")
+            logger.info(f"   TTS provider: {provider_name}")
 
         # AgentSession with LiveKit Inference LLM + TTS (plugin or Inference)
         agent_session = AgentSession(
