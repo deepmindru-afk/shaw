@@ -4,6 +4,13 @@ AGENT_LOG_FILE="/tmp/agent.log"
 SERVER_PID=""
 AGENT_SUPERVISOR_PID=""
 
+is_true() {
+  case "${1,,}" in
+    1|true|yes|on) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 cleanup() {
   echo "🛑 Shutdown signal received. Stopping services..."
   if [[ -n "$SERVER_PID" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
@@ -93,10 +100,10 @@ except Exception as e:
     print('   This may cause the agent worker to fail. Continuing anyway...')
 " || echo "⚠️  Python library check had issues, but continuing..."
 
-# Start both the web server and agent worker
+# Start both the web server and agent worker (unless disabled)
 echo "🚀 Starting web server and agent worker..."
 
-# Verify LiveKit environment variables are set
+# Verify LiveKit environment variables are set (both backend and agent need them)
 echo "🔍 Verifying LiveKit environment variables..."
 if [ -z "$LIVEKIT_URL" ] || [ -z "$LIVEKIT_API_KEY" ] || [ -z "$LIVEKIT_API_SECRET" ]; then
   echo "❌ ERROR: LiveKit environment variables are not set!"
@@ -107,6 +114,19 @@ fi
 echo "✅ LiveKit environment variables are set"
 
 cd "$(dirname "$0")" || exit 1  # Ensure we're in the backend directory
+
+# If we only want the web server (no embedded agent), start it and exit
+if is_true "${DISABLE_EMBEDDED_AGENT:-}"; then
+  echo "ℹ️ Embedded agent disabled (DISABLE_EMBEDDED_AGENT=${DISABLE_EMBEDDED_AGENT}). Starting web server only..."
+  echo "✅ Starting web server..."
+  npm start &
+  SERVER_PID=$!
+  wait $SERVER_PID
+  SERVER_EXIT=$?
+  echo "❌ Web server exited with code $SERVER_EXIT"
+  exit $SERVER_EXIT
+fi
+
 : > "$AGENT_LOG_FILE"
 echo "🧹 Cleared agent log: $AGENT_LOG_FILE"
 
