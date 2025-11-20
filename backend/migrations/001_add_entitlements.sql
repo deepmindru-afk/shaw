@@ -1,4 +1,4 @@
--- Shaw IAP Entitlements Schema
+-- Roadtrip IAP Entitlements Schema
 -- Run this migration on your PostgreSQL database
 
 -- Entitlements table (source of truth for Apple subscription status)

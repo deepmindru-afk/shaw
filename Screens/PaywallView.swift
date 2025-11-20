@@ -1,6 +1,6 @@
 //
 //  PaywallView.swift
-//  Shaw
+//  Roadtrip
 //
 
 import SwiftUI
@@ -30,7 +30,7 @@ struct PaywallView: View {
                             .font(.system(size: 64))
                             .foregroundColor(.blue)
 
-                        Text("Upgrade to Shaw Pro")
+                        Text("Upgrade to Roadtrip Pro")
                             .font(.title)
                             .fontWeight(.bold)
 
@@ -85,12 +85,12 @@ struct PaywallView: View {
                     VStack(spacing: 8) {
                         HStack(spacing: 16) {
                             Button("Terms of Service") {
-                                openURL("https://shaw.ai/terms")
+                                openURL("https://roadtrip.ai/terms")
                             }
                             .font(.caption)
 
                             Button("Privacy Policy") {
-                                openURL("https://shaw.ai/privacy")
+                                openURL("https://roadtrip.ai/privacy")
                             }
                             .font(.caption)
                         }

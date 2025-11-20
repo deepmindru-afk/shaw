@@ -128,7 +128,7 @@ railway logs | grep -i agent
 
 ### Check Health Endpoint
 ```bash
-curl https://shaw.up.railway.app/health/agent
+curl https://roadtrip.up.railway.app/health/agent
 ```
 
 Response:

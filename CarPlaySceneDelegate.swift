@@ -114,7 +114,7 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
             sections.append(sessionsSection)
         }
         
-        let newListTemplate = CPListTemplate(title: "Shaw", sections: sections)
+        let newListTemplate = CPListTemplate(title: "Roadtrip", sections: sections)
         
         // Always recreate the template since updateListTemplate doesn't exist
         listTemplate = newListTemplate

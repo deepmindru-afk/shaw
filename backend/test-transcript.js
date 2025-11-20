@@ -3,7 +3,7 @@
  * Test script to fetch transcript from a session
  */
 
-const BACKEND_URL = process.env.BACKEND_URL || 'https://shaw.up.railway.app';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://roadtrip.up.railway.app';
 const TEST_SESSION_ID = process.argv[2] || null;
 
 async function testTranscript() {

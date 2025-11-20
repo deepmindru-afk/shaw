@@ -135,7 +135,7 @@ GitHub deployments always work because:
 **For consistency**, always deploy from the repository root when using CLI:
 
 ```bash
-cd /Users/jeremycai/Projects/shaw-app
+cd /Users/jeremycai/Projects/roadtrip-app
 railway up --detach
 ```
 

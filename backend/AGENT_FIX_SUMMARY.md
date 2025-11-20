@@ -61,7 +61,7 @@
 
 3. **Check Agent Health**:
    ```bash
-   curl https://shaw.up.railway.app/health/agent
+   curl https://roadtrip.up.railway.app/health/agent
    ```
 
 4. **Test from iOS App**:

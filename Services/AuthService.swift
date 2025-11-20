@@ -343,6 +343,38 @@ class AuthService {
             UserDefaults.standard.set(expiry, forKey: tokenExpiryKey)
         }
     }
+    
+    func deleteAccount() async throws {
+        // Construct URL for delete account endpoint
+        // Assuming base URL structure from configuration
+        // Note: configuration.authLoginURL is likely something like "https://.../v1/auth/login"
+        // We need to construct "https://.../v1/auth/account"
+        
+        guard let loginURL = URL(string: configuration.authLoginURL),
+              let baseURL = loginURL.deletingLastPathComponent().absoluteString.hasSuffix("/") 
+                ? loginURL.deletingLastPathComponent() 
+                : loginURL.deletingLastPathComponent().appendingPathComponent("/") as URL? else {
+            throw AuthError.invalidURL
+        }
+        
+        let deleteURL = baseURL.appendingPathComponent("account")
+        
+        var request = URLRequest(url: deleteURL)
+        request.httpMethod = "DELETE"
+        applyAuthHeaders(to: &request)
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw AuthError.authenticationFailed
+        }
+        
+        // On success, sign out locally
+        await MainActor.run {
+            logout(reason: "Account deleted")
+        }
+    }
 }
 
 enum AuthError: LocalizedError {

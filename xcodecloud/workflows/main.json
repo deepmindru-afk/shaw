@@ -1,7 +1,7 @@
 {
-  "name": "Shaw - Main CI",
+  "name": "Roadtrip - Main CI",
   "description": "Build and test every push to main.",
-  "containerFilePath": "Shaw.xcodeproj",
+  "containerFilePath": "Roadtrip.xcodeproj",
   "isEnabled": true,
   "isLockedForEditing": false,
   "clean": false,
@@ -23,9 +23,9 @@
   },
   "actions": [
     {
-      "name": "Archive Shaw",
+      "name": "Archive Roadtrip",
       "actionType": "ARCHIVE",
-      "scheme": "Shaw",
+      "scheme": "Roadtrip",
       "platform": "IOS",
       "isRequiredToPass": true
     }

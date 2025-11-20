@@ -56,7 +56,7 @@ cd backend
 lk agent list
 
 # View agent logs (if deployed to cloud)
-lk agent logs shaw-voice-assistant
+lk agent logs roadtrip-voice-assistant
 
 # Check recent dispatches
 lk dispatch list

@@ -1,4 +1,4 @@
-# Shaw Monetization - Complete Implementation Summary
+# Roadtrip Monetization - Complete Implementation Summary
 
 ## Executive Summary
 
@@ -49,7 +49,7 @@ Files to add:
 4. `Services/IAPAPI.swift` → Services group
 5. `Screens/PaywallView.swift` → Screens group
 
-For each: ✓ Check "Shaw" target, click Add
+For each: ✓ Check "Roadtrip" target, click Add
 
 Then: Build (⌘B) to verify
 
@@ -75,15 +75,15 @@ No manual migration needed - tables will be created/verified every time the serv
 #### A. Create Subscription Products
 
 1. Go to appstoreconnect.apple.com → Your App → Subscriptions
-2. Create Subscription Group: "Shaw Pro"
+2. Create Subscription Group: "Roadtrip Pro"
 3. Add products:
-   - **Monthly**: `com.vanities.shaw.pro.month` ($9.99)
-   - **Yearly**: `com.vanities.shaw.pro.year` ($79.99)
+   - **Monthly**: `com.vanities.roadtrip.pro.month` ($9.99)
+   - **Yearly**: `com.vanities.roadtrip.pro.year` ($79.99)
 
 #### B. Generate API Key
 
 1. Users and Access → Keys → Generate new key
-2. Name: "Shaw Backend", Access: "App Manager"
+2. Name: "Roadtrip Backend", Access: "App Manager"
 3. **Download .p8 file** (only one chance!)
 4. Note **Issuer ID** and **Key ID**
 
@@ -321,8 +321,8 @@ backend/server.js - Updated with IAP imports
 
 **IMPORTANT:** These must match exactly in App Store Connect
 
-- Monthly: `com.vanities.shaw.pro.month`
-- Yearly: `com.vanities.shaw.pro.year`
+- Monthly: `com.vanities.roadtrip.pro.month`
+- Yearly: `com.vanities.roadtrip.pro.year`
 
 Used in:
 - `Services/SubscriptionManager.swift` (line 16-17)

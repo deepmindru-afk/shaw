@@ -15,8 +15,6 @@ struct ContentView: View {
         Group {
             if !settings.isSignedIn {
                 SignInScreen()
-            } else if !settings.hasSeenOnboarding {
-                OnboardingScreen()
             } else {
                 MainAppView()
             }

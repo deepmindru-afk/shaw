@@ -35,7 +35,6 @@
 		C6B1538D152779247A875680 /* Configuration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 955C4F1C4DA930C652EC715E /* Configuration.swift */; };
 		D7C6E8F9A5B4D3E7C8F1E6D9 /* CallManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F8E9D7A6B4F3E8D9C2E7F1 /* CallManagerTests.swift */; };
 		D8E9F7C6A4E5D9F8C7E3F6E5 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8D9E7C6B5A4F3E8D9F2E7C5 /* AuthServiceTests.swift */; };
-		D8F42AA5313BE73F164402E2 /* OnboardingScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C97D27792DB98A6415A139B2 /* OnboardingScreen.swift */; };
 		E5FF4269A0FC19DD60EBAE80 /* LiveKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9675F68966B06ED84429C11C /* LiveKitService.swift */; };
 		E8A9C5D4F7B2E6A3D8C1F4E5 /* MockCallKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3D8E9F7C5B4A2E8D9F1C6E7 /* MockCallKit.swift */; };
 		E8D9F7C6A5E4D8F9C7E1F6E2 /* AssistantCallCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6E9F8C7B5A4E3D9F8C2E7F3 /* AssistantCallCoordinatorTests.swift */; };
@@ -61,14 +60,14 @@
 			containerPortal = 95C58B562B75208B00FB7199 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 95C58B5D2B75208B00FB7199;
-			remoteInfo = Shaw;
+			remoteInfo = Roadtrip;
 		};
 		95C58B792B75208F00FB7199 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 95C58B562B75208B00FB7199 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 95C58B5D2B75208B00FB7199;
-			remoteInfo = Shaw;
+			remoteInfo = Roadtrip;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -82,13 +81,13 @@
 		750AD0E191A00BF314925834 /* SessionLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLogger.swift; sourceTree = "<group>"; };
 		78DC8E30FF4444B1B6907FD4 /* VoiceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceModels.swift; sourceTree = "<group>"; };
 		955C4F1C4DA930C652EC715E /* Configuration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
-		95C58B5E2B75208B00FB7199 /* Shaw.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Shaw.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		95C58B5E2B75208B00FB7199 /* Roadtrip.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Roadtrip.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		95C58B632B75208B00FB7199 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		95C58B652B75208F00FB7199 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		95C58B682B75208F00FB7199 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		95C58B6E2B75208F00FB7199 /* ShawTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShawTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		95C58B6E2B75208F00FB7199 /* RoadtripTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RoadtripTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		95C58B722B75208F00FB7199 /* CarPlaySwiftUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlaySwiftUITests.swift; sourceTree = "<group>"; };
-		95C58B782B75208F00FB7199 /* ShawUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShawUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		95C58B782B75208F00FB7199 /* RoadtripUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RoadtripUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		95C58B7C2B75208F00FB7199 /* CarPlaySwiftUIUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlaySwiftUIUITests.swift; sourceTree = "<group>"; };
 		95C58B7E2B75208F00FB7199 /* CarPlaySwiftUIUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlaySwiftUIUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		95C58B8B2B75212C00FB7199 /* CarPlaySceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlaySceneDelegate.swift; sourceTree = "<group>"; };
@@ -96,7 +95,7 @@
 		95C58B8F2B75216A00FB7199 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		95C58B902B75219900FB7199 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		95C58B932B7521F600FB7199 /* CarPlay.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CarPlay.framework; path = System/Library/Frameworks/CarPlay.framework; sourceTree = SDKROOT; };
-		95C58B952B75234300FB7199 /* Shaw.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Shaw.entitlements; sourceTree = "<group>"; };
+		95C58B952B75234300FB7199 /* Roadtrip.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Roadtrip.entitlements; sourceTree = "<group>"; };
 		9675F68966B06ED84429C11C /* LiveKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveKitService.swift; sourceTree = "<group>"; };
 		9A6D2EE242DA425281900EEA /* HybridSessionLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HybridSessionLogger.swift; sourceTree = "<group>"; };
 		9ACA884917C34E0C8DEDA8FD /* VoicePreviewService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoicePreviewService.swift; sourceTree = "<group>"; };
@@ -107,10 +106,9 @@
 		A9AEA20E2FF6F23D5382061B /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		B47152B25017465B10BC0D70 /* CallManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallManager.swift; sourceTree = "<group>"; };
 		B4E9F8D7C6A5E3F9D8C1F7E8 /* MockURLProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockURLProtocol.swift; sourceTree = "<group>"; };
-		B70B57872EC2785D00966EC2 /* Shaw.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = Shaw.xctestplan; sourceTree = "<group>"; };
+		B70B57872EC2785D00966EC2 /* Roadtrip.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = Roadtrip.xctestplan; sourceTree = "<group>"; };
 		C0A7C61059E1FBED46737C3B /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
 		C5F8E9D7A6B4F3E8D9C2E7F1 /* CallManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallManagerTests.swift; sourceTree = "<group>"; };
-		C97D27792DB98A6415A139B2 /* OnboardingScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingScreen.swift; sourceTree = "<group>"; };
 		D6E9F8C7B5A4E3D9F8C2E7F3 /* AssistantCallCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantCallCoordinatorTests.swift; sourceTree = "<group>"; };
 		DE765871A2DC4733B411C8CB /* CallScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallScreen.swift; sourceTree = "<group>"; };
 		E7F9D8C6A5B4F3E9D8C1F7E4 /* SessionLoggerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLoggerTests.swift; sourceTree = "<group>"; };
@@ -188,7 +186,6 @@
 			isa = PBXGroup;
 			children = (
 				5C19B09085B304D9CC60C038 /* HomeScreen.swift */,
-				C97D27792DB98A6415A139B2 /* OnboardingScreen.swift */,
 				41AE9456A9C81A52015484E0 /* SessionsListScreen.swift */,
 				6FB9C43A548091AD05A0CE38 /* SessionDetailScreen.swift */,
 				A79AD2CD15C369F5E45DDE03 /* SettingsScreen.swift */,
@@ -202,10 +199,10 @@
 		95C58B552B75208B00FB7199 = {
 			isa = PBXGroup;
 			children = (
-				B70B57872EC2785D00966EC2 /* Shaw.xctestplan */,
-				95C58B602B75208B00FB7199 /* Shaw */,
-				95C58B712B75208F00FB7199 /* ShawTests */,
-				95C58B7B2B75208F00FB7199 /* ShawUITests */,
+				B70B57872EC2785D00966EC2 /* Roadtrip.xctestplan */,
+				95C58B602B75208B00FB7199 /* Roadtrip */,
+				95C58B712B75208F00FB7199 /* RoadtripTests */,
+				95C58B7B2B75208F00FB7199 /* RoadtripUITests */,
 				95C58B5F2B75208B00FB7199 /* Products */,
 				95C58B922B7521F600FB7199 /* Frameworks */,
 			);
@@ -214,9 +211,9 @@
 		95C58B5F2B75208B00FB7199 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				95C58B5E2B75208B00FB7199 /* Shaw.app */,
-				95C58B6E2B75208F00FB7199 /* ShawTests.xctest */,
-				95C58B782B75208F00FB7199 /* ShawUITests.xctest */,
+				95C58B5E2B75208B00FB7199 /* Roadtrip.app */,
+				95C58B6E2B75208F00FB7199 /* RoadtripTests.xctest */,
+				95C58B782B75208F00FB7199 /* RoadtripUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -234,10 +231,10 @@
 				30F3F8C2C66A0F53C7A9EF9F /* Coordinators */,
 				95C58B8F2B75216A00FB7199 /* Info.plist */,
 				95C58B652B75208F00FB7199 /* Assets.xcassets */,
-				95C58B952B75234300FB7199 /* Shaw.entitlements */,
+				95C58B952B75234300FB7199 /* Roadtrip.entitlements */,
 				95C58B672B75208F00FB7199 /* Preview Content */,
 			);
-			name = Shaw;
+			name = Roadtrip;
 			sourceTree = "<group>";
 		};
 		95C58B672B75208F00FB7199 /* Preview Content */ = {
@@ -248,7 +245,7 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
-		95C58B712B75208F00FB7199 /* ShawTests */ = {
+		95C58B712B75208F00FB7199 /* RoadtripTests */ = {
 			isa = PBXGroup;
 			children = (
 				95C58B722B75208F00FB7199 /* CarPlaySwiftUITests.swift */,
@@ -258,16 +255,16 @@
 				F8D9E7C6B5A4F3E8D9F2E7C5 /* AuthServiceTests.swift */,
 				A9E8D7F6C5B4E3D8F9C1E7A2 /* Mocks */,
 			);
-			path = ShawTests;
+			path = RoadtripTests;
 			sourceTree = "<group>";
 		};
-		95C58B7B2B75208F00FB7199 /* ShawUITests */ = {
+		95C58B7B2B75208F00FB7199 /* RoadtripUITests */ = {
 			isa = PBXGroup;
 			children = (
 				95C58B7C2B75208F00FB7199 /* CarPlaySwiftUIUITests.swift */,
 				95C58B7E2B75208F00FB7199 /* CarPlaySwiftUIUITestsLaunchTests.swift */,
 			);
-			path = ShawUITests;
+			path = RoadtripUITests;
 			sourceTree = "<group>";
 		};
 		95C58B922B7521F600FB7199 /* Frameworks */ = {
@@ -301,9 +298,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		95C58B5D2B75208B00FB7199 /* Shaw */ = {
+		95C58B5D2B75208B00FB7199 /* Roadtrip */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 95C58B822B75208F00FB7199 /* Build configuration list for PBXNativeTarget "Shaw" */;
+			buildConfigurationList = 95C58B822B75208F00FB7199 /* Build configuration list for PBXNativeTarget "Roadtrip" */;
 			buildPhases = (
 				95C58B5A2B75208B00FB7199 /* Sources */,
 				95C58B5B2B75208B00FB7199 /* Frameworks */,
@@ -313,17 +310,17 @@
 			);
 			dependencies = (
 			);
-			name = Shaw;
+			name = Roadtrip;
 			packageProductDependencies = (
 				A7E8F3C4D6B9E1F2A8C5D7E9 /* LiveKit */,
 			);
-			productName = Shaw;
-			productReference = 95C58B5E2B75208B00FB7199 /* Shaw.app */;
+			productName = Roadtrip;
+			productReference = 95C58B5E2B75208B00FB7199 /* Roadtrip.app */;
 			productType = "com.apple.product-type.application";
 		};
-		95C58B6D2B75208F00FB7199 /* ShawTests */ = {
+		95C58B6D2B75208F00FB7199 /* RoadtripTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 95C58B852B75208F00FB7199 /* Build configuration list for PBXNativeTarget "ShawTests" */;
+			buildConfigurationList = 95C58B852B75208F00FB7199 /* Build configuration list for PBXNativeTarget "RoadtripTests" */;
 			buildPhases = (
 				95C58B6A2B75208F00FB7199 /* Sources */,
 				95C58B6B2B75208F00FB7199 /* Frameworks */,
@@ -334,14 +331,14 @@
 			dependencies = (
 				95C58B702B75208F00FB7199 /* PBXTargetDependency */,
 			);
-			name = ShawTests;
-			productName = ShawTests;
-			productReference = 95C58B6E2B75208F00FB7199 /* ShawTests.xctest */;
+			name = RoadtripTests;
+			productName = RoadtripTests;
+			productReference = 95C58B6E2B75208F00FB7199 /* RoadtripTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		95C58B772B75208F00FB7199 /* ShawUITests */ = {
+		95C58B772B75208F00FB7199 /* RoadtripUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 95C58B882B75208F00FB7199 /* Build configuration list for PBXNativeTarget "ShawUITests" */;
+			buildConfigurationList = 95C58B882B75208F00FB7199 /* Build configuration list for PBXNativeTarget "RoadtripUITests" */;
 			buildPhases = (
 				95C58B742B75208F00FB7199 /* Sources */,
 				95C58B752B75208F00FB7199 /* Frameworks */,
@@ -352,9 +349,9 @@
 			dependencies = (
 				95C58B7A2B75208F00FB7199 /* PBXTargetDependency */,
 			);
-			name = ShawUITests;
-			productName = ShawUITests;
-			productReference = 95C58B782B75208F00FB7199 /* ShawUITests.xctest */;
+			name = RoadtripUITests;
+			productName = RoadtripUITests;
+			productReference = 95C58B782B75208F00FB7199 /* RoadtripUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -380,7 +377,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 95C58B592B75208B00FB7199 /* Build configuration list for PBXProject "Shaw" */;
+			buildConfigurationList = 95C58B592B75208B00FB7199 /* Build configuration list for PBXProject "Roadtrip" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -396,9 +393,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				95C58B5D2B75208B00FB7199 /* Shaw */,
-				95C58B6D2B75208F00FB7199 /* ShawTests */,
-				95C58B772B75208F00FB7199 /* ShawUITests */,
+				95C58B5D2B75208B00FB7199 /* Roadtrip */,
+				95C58B6D2B75208F00FB7199 /* RoadtripTests */,
+				95C58B772B75208F00FB7199 /* RoadtripUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -449,7 +446,6 @@
 				960754B4CF9635E3890DF8F5 /* Session.swift in Sources */,
 				971D1764C310045005E2A072 /* UserSettings.swift in Sources */,
 				F3A0905138AE4C6D8DEA3AEE /* HomeScreen.swift in Sources */,
-				D8F42AA5313BE73F164402E2 /* OnboardingScreen.swift in Sources */,
 				F74BBF634EE88CF77F326089 /* SessionsListScreen.swift in Sources */,
 				845B4F43C53ADB1782DD323B /* SessionDetailScreen.swift in Sources */,
 				610FF6E03DEB7DEBB6E8FB0B /* SettingsScreen.swift in Sources */,
@@ -498,12 +494,12 @@
 /* Begin PBXTargetDependency section */
 		95C58B702B75208F00FB7199 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 95C58B5D2B75208B00FB7199 /* Shaw */;
+			target = 95C58B5D2B75208B00FB7199 /* Roadtrip */;
 			targetProxy = 95C58B6F2B75208F00FB7199 /* PBXContainerItemProxy */;
 		};
 		95C58B7A2B75208F00FB7199 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 95C58B5D2B75208B00FB7199 /* Shaw */;
+			target = 95C58B5D2B75208B00FB7199 /* Roadtrip */;
 			targetProxy = 95C58B792B75208F00FB7199 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -635,9 +631,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Shaw.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Roadtrip.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 3;
+                CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_ASSET_PATHS = "\"Preview Content\"";
 				DEVELOPMENT_TEAM = C4ZTUACCUP;
 				ENABLE_PREVIEWS = YES;
@@ -671,9 +667,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Shaw.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Roadtrip.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 3;
+                CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_ASSET_PATHS = "\"Preview Content\"";
 				DEVELOPMENT_TEAM = C4ZTUACCUP;
 				ENABLE_PREVIEWS = YES;
@@ -707,17 +703,17 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 3;
+                CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = C4ZTUACCUP;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.vanities.ShawTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vanities.RoadtripTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Shaw.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Shaw";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Roadtrip.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Roadtrip";
 			};
 			name = Debug;
 		};
@@ -726,7 +722,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 3;
+                CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = C4ZTUACCUP;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
@@ -736,7 +732,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Shaw.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Shaw";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Roadtrip.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Roadtrip";
 			};
 			name = Release;
 		};
@@ -744,16 +740,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 3;
+                CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 8Q3RG3ULSU;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.vanities.ShawUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vanities.RoadtripUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = Shaw;
+				TEST_TARGET_NAME = Roadtrip;
 			};
 			name = Debug;
 		};
@@ -761,7 +757,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 3;
+                CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 8Q3RG3ULSU;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
@@ -770,14 +766,14 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = Shaw;
+				TEST_TARGET_NAME = Roadtrip;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		95C58B592B75208B00FB7199 /* Build configuration list for PBXProject "Shaw" */ = {
+		95C58B592B75208B00FB7199 /* Build configuration list for PBXProject "Roadtrip" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				95C58B802B75208F00FB7199 /* Debug */,
@@ -786,7 +782,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		95C58B822B75208F00FB7199 /* Build configuration list for PBXNativeTarget "Shaw" */ = {
+		95C58B822B75208F00FB7199 /* Build configuration list for PBXNativeTarget "Roadtrip" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				95C58B832B75208F00FB7199 /* Debug */,
@@ -795,7 +791,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		95C58B852B75208F00FB7199 /* Build configuration list for PBXNativeTarget "ShawTests" */ = {
+		95C58B852B75208F00FB7199 /* Build configuration list for PBXNativeTarget "RoadtripTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				95C58B862B75208F00FB7199 /* Debug */,
@@ -804,7 +800,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		95C58B882B75208F00FB7199 /* Build configuration list for PBXNativeTarget "ShawUITests" */ = {
+		95C58B882B75208F00FB7199 /* Build configuration list for PBXNativeTarget "RoadtripUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				95C58B892B75208F00FB7199 /* Debug */,

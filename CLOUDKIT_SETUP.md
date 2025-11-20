@@ -8,12 +8,12 @@ Complete guide to enabling iCloud sync for session transcripts.
 
 1. **Open project in Xcode**
    ```bash
-   open Shaw.xcodeproj
+   open Roadtrip.xcodeproj
    ```
 
-2. **Select the Shaw target**
+2. **Select the Roadtrip target**
    - Click on the project in the navigator (top-left)
-   - Select "Shaw" under TARGETS
+   - Select "Roadtrip" under TARGETS
 
 3. **Go to Signing & Capabilities tab**
    - Click the tab at the top of the main editor
@@ -117,7 +117,7 @@ The app will create the schema automatically on first session save. Just:
 
 **Sessions not syncing:**
 - Check you're signed into same iCloud account on all devices
-- Check Settings → [Your Name] → iCloud → Show All → Shaw → Make sure it's ON
+- Check Settings → [Your Name] → iCloud → Show All → Roadtrip → Make sure it's ON
 - Try toggling iCloud sync off and back on for the app
 
 ## Step 4: Backend Integration

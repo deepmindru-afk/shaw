@@ -71,7 +71,7 @@ async function setupTestAccount() {
     const entitlementId = `entitlement-${crypto.randomUUID()}`;
     const entitlementStmt = db.prepare(`
       INSERT INTO entitlements (original_transaction_id, product_id, status, expires_at, environment, last_update_at, created_at)
-      VALUES (?, 'com.shaw.pro.monthly', 'active', ?, 'Production', ?, ?)
+      VALUES (?, 'com.roadtrip.pro.monthly', 'active', ?, 'Production', ?, ?)
     `);
     
     const expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString(); // 1 year from now

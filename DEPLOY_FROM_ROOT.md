@@ -52,7 +52,7 @@ The `start.sh` script uses absolute paths (`/opt/venv/bin/python`) so it works r
 
 ### From Repo Root (Now Works!)
 ```bash
-cd /Users/jeremycai/Projects/shaw-app
+cd /Users/jeremycai/Projects/roadtrip-app
 railway up --detach
 ```
 
@@ -68,7 +68,7 @@ After updating Railway dashboard Root Directory to `.`:
 
 1. **Deploy via CLI**:
    ```bash
-   cd /Users/jeremycai/Projects/shaw-app
+   cd /Users/jeremycai/Projects/roadtrip-app
    railway up --detach
    ```
 

@@ -1,6 +1,6 @@
 //
 //  SettingsScreen.swift
-//  Shaw
+//  Roadtrip
 //
 
 import SwiftUI
@@ -18,8 +18,10 @@ private struct RetentionOption: Identifiable {
 struct SettingsScreen: View {
     @ObservedObject private var settings = UserSettings.shared
     @State private var appCoordinator = AppCoordinator.shared
-    @State private var showDeleteAllConfirmation = false
+    @State private var showDeleteAccountConfirmation = false
     @State private var showDeleteSuccess = false
+    @State private var showDeleteAccountError = false
+    @State private var deleteAccountErrorMessage: String?
     @State private var usageStats: UsageStatsResponse?
     @State private var isLoadingUsage = false
     @State private var usageError: String?
@@ -57,18 +59,23 @@ struct SettingsScreen: View {
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
-        .alert("Delete All History", isPresented: $showDeleteAllConfirmation) {
+        .alert("Delete Account", isPresented: $showDeleteAccountConfirmation) {
             Button("Cancel", role: .cancel) {}
-            Button("Delete All", role: .destructive) {
-                deleteAllSessions()
+            Button("Delete Account", role: .destructive) {
+                deleteAccount()
             }
         } message: {
-            Text("Are you sure you want to delete all your session history? This action cannot be undone.")
+            Text("Are you sure you want to delete your account? This will permanently remove all your data, sessions, and subscriptions. This action cannot be undone.")
         }
-        .alert("Success", isPresented: $showDeleteSuccess) {
+        .alert("Account Deleted", isPresented: $showDeleteSuccess) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("All session history has been deleted.")
+            Text("Your account and all associated data have been deleted.")
+        }
+        .alert("Deletion Failed", isPresented: $showDeleteAccountError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(deleteAccountErrorMessage ?? "Failed to delete account. Please try again.")
         }
         .alert("Restore Complete", isPresented: $showRestoreSuccess) {
             Button("OK", role: .cancel) {}
@@ -449,10 +456,10 @@ struct SettingsScreen: View {
 
             retentionDescription
 
-            Button(role: .destructive, action: { showDeleteAllConfirmation = true }) {
+            Button(role: .destructive, action: { showDeleteAccountConfirmation = true }) {
                 HStack {
-                    Image(systemName: "trash")
-                    Text("Delete All History")
+                    Image(systemName: "person.crop.circle.badge.xmark")
+                    Text("Delete Account")
                 }
             }
         } header: {
@@ -466,7 +473,7 @@ struct SettingsScreen: View {
                 .help("Automatically delete old sessions to save storage space")
             }
         } footer: {
-            Text("This will permanently delete all your session history and summaries.")
+            Text("This will permanently delete your account and all associated data.")
         }
     }
 
@@ -511,13 +518,13 @@ struct SettingsScreen: View {
                 .buttonStyle(.plain)
             }
         }
-        .alert("Shaw Pro required", isPresented: $showRetentionUpgradeAlert) {
+        .alert("Roadtrip Pro required", isPresented: $showRetentionUpgradeAlert) {
             Button("Later", role: .cancel) {}
             Button("Upgrade") {
                 showPaywall = true
             }
         } message: {
-            Text("Longer retention periods are available for Shaw Pro members. Upgrade to unlock Never delete and 90+ day options.")
+            Text("Longer retention periods are available for Roadtrip Pro members. Upgrade to unlock Never delete and 90+ day options.")
         }
     }
 
@@ -681,16 +688,19 @@ struct SettingsScreen: View {
         }
     }
 
-    private func deleteAllSessions() {
+    private func deleteAccount() {
         Task {
             do {
-                try await hybridLogger.deleteAllSessions()
+                try await AuthService.shared.deleteAccount()
                 await MainActor.run {
                     showDeleteSuccess = true
+                    settings.isSignedIn = false
+                    hybridLogger.sessions = []
                 }
             } catch {
                 await MainActor.run {
-                    print("Failed to delete all sessions: \(error)")
+                    deleteAccountErrorMessage = error.localizedDescription
+                    showDeleteAccountError = true
                 }
             }
         }

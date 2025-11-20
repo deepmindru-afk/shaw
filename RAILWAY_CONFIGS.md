@@ -22,7 +22,7 @@ We deploy from the **repo root** with Root Directory = `.` in Railway dashboard.
 ## File Structure
 
 ```
-shaw-app/
+roadtrip-app/
 ├── railway.json              ← Main service config (Node.js + Python)
 ├── nixpacks.toml             ← Main service build config
 ├── start.sh                  ← Wrapper script (calls backend/start.sh)

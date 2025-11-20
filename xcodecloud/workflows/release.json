@@ -1,7 +1,7 @@
 {
-  "name": "Shaw - Release CI",
+  "name": "Roadtrip - Release CI",
   "description": "Archive release/* branches for TestFlight.",
-  "containerFilePath": "Shaw.xcodeproj",
+  "containerFilePath": "Roadtrip.xcodeproj",
   "isEnabled": true,
   "isLockedForEditing": false,
   "clean": true,
@@ -25,7 +25,7 @@
     {
       "name": "Archive Release",
       "actionType": "ARCHIVE",
-      "scheme": "Shaw",
+      "scheme": "Roadtrip",
       "platform": "IOS",
       "isRequiredToPass": true
     }

@@ -25,17 +25,17 @@
 1. Bump build number to avoid duplicate build conflicts (e.g., set `CFBundleVersion` to `2`).
 2. Archive:
 
-   * `xcodebuild -project Shaw.xcodeproj -scheme Shaw -configuration Release -sdk iphoneos -archivePath build/Shaw.xcarchive archive`
+   * `xcodebuild -project Roadtrip.xcodeproj -scheme Roadtrip -configuration Release -sdk iphoneos -archivePath build/Roadtrip.xcarchive archive`
 3. Export IPA:
 
-   * `xcodebuild -exportArchive -archivePath build/Shaw.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath build -allowProvisioningUpdates`
+   * `xcodebuild -exportArchive -archivePath build/Roadtrip.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath build -allowProvisioningUpdates`
 4. Upload via Transporter (ASC key):
 
-   * `xcrun iTMSTransporter -m upload -assetFile build/Shaw.ipa -apiKey G26HL635HC -apiIssuer 1b1f70f6-3fbb-49c9-8230-2e55cb269214 -verbose`
+   * `xcrun iTMSTransporter -m upload -assetFile build/Roadtrip.ipa -apiKey G26HL635HC -apiIssuer 1b1f70f6-3fbb-49c9-8230-2e55cb269214 -verbose`
 
 ## Validation
 
-* Inspect `build/Shaw.ipa` Info.plist to confirm `NSCameraUsageDescription` is present and strings are correct.
+* Inspect `build/Roadtrip.ipa` Info.plist to confirm `NSCameraUsageDescription` is present and strings are correct.
 
 * Ensure TestFlight shows the new build after processing.
 

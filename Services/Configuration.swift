@@ -27,11 +27,11 @@ struct Configuration {
     var apiBaseURL: String {
         switch AppEnvironment.current {
         case .development:
-            return ProcessInfo.processInfo.environment["API_BASE_URL"] ?? "https://shaw.up.railway.app/v1"
+            return ProcessInfo.processInfo.environment["API_BASE_URL"] ?? "https://roadtrip.up.railway.app/v1"
         case .staging:
-            return ProcessInfo.processInfo.environment["API_BASE_URL"] ?? "https://shaw.up.railway.app/v1"
+            return ProcessInfo.processInfo.environment["API_BASE_URL"] ?? "https://roadtrip.up.railway.app/v1"
         case .production:
-            return ProcessInfo.processInfo.environment["API_BASE_URL"] ?? "https://shaw.up.railway.app/v1"
+            return ProcessInfo.processInfo.environment["API_BASE_URL"] ?? "https://roadtrip.up.railway.app/v1"
         }
     }
 

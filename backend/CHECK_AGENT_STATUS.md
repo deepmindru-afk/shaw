@@ -14,7 +14,7 @@ The agent worker process starts (PID: 9) but **no entrypoint logs appear**. This
 2. Select your project: `bunnyai` or `bunnyai2`
 3. Navigate to **Agents** section
 4. Check:
-   - Is there a deployed agent? (should be `shaw-voice-assistant` if deployed to cloud)
+   - Is there a deployed agent? (should be `roadtrip-voice-assistant` if deployed to cloud)
    - Are there any running agent instances?
    - Check agent logs in the dashboard
 
@@ -27,7 +27,7 @@ cd backend
 lk agent list
 
 # View agent logs (if agent is deployed to LiveKit Cloud)
-lk agent logs shaw-voice-assistant
+lk agent logs roadtrip-voice-assistant
 
 # Check dispatch status
 lk dispatch list --room <room-name>

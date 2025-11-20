@@ -23,7 +23,7 @@ When you run `railway up` from within the `backend` directory:
 
 ```bash
 # ✅ CORRECT: Deploy from repo root
-cd /Users/jeremycai/Projects/shaw-app
+cd /Users/jeremycai/Projects/roadtrip-app
 railway up --detach
 
 # ❌ WRONG: Don't deploy from backend directory
@@ -43,7 +43,7 @@ When Railway is configured with Root Directory = `backend`:
 ### For Node.js Service (combined service)
 
 ```bash
-cd /Users/jeremycai/Projects/shaw-app
+cd /Users/jeremycai/Projects/roadtrip-app
 railway up --detach
 ```
 
@@ -62,7 +62,7 @@ Railway will:
 
 2. **Deploy from repo root**:
    ```bash
-   cd /Users/jeremycai/Projects/shaw-app
+   cd /Users/jeremycai/Projects/roadtrip-app
    railway service python-service-name  # Link to Python service first
    railway up --detach
    ```

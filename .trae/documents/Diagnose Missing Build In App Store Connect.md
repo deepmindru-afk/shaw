@@ -1,17 +1,17 @@
 ## Likely Causes
-- Bundle identifier mismatch (case-sensitive): build uses `com.vanities.Shaw`; ASC app may be `com.vanities.shaw`.
+- Bundle identifier mismatch (case-sensitive): build uses `com.vanities.Roadtrip`; ASC app may be `com.vanities.roadtrip`.
 - Team/account mismatch: upload tied to a different org than your ASC app record.
 - Distribution signing: archive signed for Development and export didn’t re-sign properly.
 - Version/build duplication: same `CFBundleShortVersionString` and `CFBundleVersion` already uploaded → ASC ignores.
 
 ## Quick Checks (You Do In ASC/Transporter)
-- ASC → App Information → confirm Bundle ID exactly matches `com.vanities.Shaw`.
+- ASC → App Information → confirm Bundle ID exactly matches `com.vanities.Roadtrip`.
 - ASC → TestFlight → see if any new build is “Processing”. It can take 10–20 minutes.
 - ASC → Users and Access → Keys: confirm key `G26HL635HC` belongs to the same org as the app.
 - Transporter app: sign in with Apple ID; Recent Deliveries shows Apple ID uploads only (API key uploads may not appear).
 
 ## Local Verification I Can Run
-- Inspect `build/Shaw.ipa` Info.plist to confirm bundle id, version, build.
+- Inspect `build/Roadtrip.ipa` Info.plist to confirm bundle id, version, build.
 - Check signing on IPA to ensure “Apple Distribution” identity.
 - Read `Packaging.log` to confirm export profile and signing.
 

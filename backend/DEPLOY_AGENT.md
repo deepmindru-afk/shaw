@@ -3,7 +3,7 @@
 ## Quick Start (Run these commands in your terminal)
 
 ```bash
-cd /Users/jeremycai/Projects/shaw-app/backend
+cd /Users/jeremycai/Projects/roadtrip-app/backend
 
 # 1. Authenticate with LiveKit Cloud (opens browser)
 lk cloud auth
@@ -12,7 +12,7 @@ lk cloud auth
 lk agent create
 
 # When prompted:
-# - Agent name: shaw-voice-assistant
+# - Agent name: roadtrip-voice-assistant
 # - Entry point: agent.py
 # - Region: us-east
 
@@ -41,7 +41,7 @@ Once deployed:
 lk agent list
 
 # View agent logs
-lk agent logs shaw-voice-assistant
+lk agent logs roadtrip-voice-assistant
 ```
 
 ## Environment Variables Needed

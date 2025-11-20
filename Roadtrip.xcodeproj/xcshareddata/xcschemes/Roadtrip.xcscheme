@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "95C58B5D2B75208B00FB7199"
-               BuildableName = "Shaw.app"
-               BlueprintName = "Shaw"
-               ReferencedContainer = "container:Shaw.xcodeproj">
+               BuildableName = "Roadtrip.app"
+               BlueprintName = "Roadtrip"
+               ReferencedContainer = "container:Roadtrip.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -35,9 +35,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "95C58B6D2B75208F00FB7199"
-               BuildableName = "ShawTests.xctest"
-               BlueprintName = "ShawTests"
-               ReferencedContainer = "container:Shaw.xcodeproj">
+               BuildableName = "RoadtripTests.xctest"
+               BlueprintName = "RoadtripTests"
+               ReferencedContainer = "container:Roadtrip.xcodeproj">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -46,9 +46,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "95C58B772B75208F00FB7199"
-               BuildableName = "ShawUITests.xctest"
-               BlueprintName = "ShawUITests"
-               ReferencedContainer = "container:Shaw.xcodeproj">
+               BuildableName = "RoadtripUITests.xctest"
+               BlueprintName = "RoadtripUITests"
+               ReferencedContainer = "container:Roadtrip.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -68,9 +68,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "95C58B5D2B75208B00FB7199"
-            BuildableName = "Shaw.app"
-            BlueprintName = "Shaw"
-            ReferencedContainer = "container:Shaw.xcodeproj">
+            BuildableName = "Roadtrip.app"
+            BlueprintName = "Roadtrip"
+            ReferencedContainer = "container:Roadtrip.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -85,9 +85,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "95C58B5D2B75208B00FB7199"
-            BuildableName = "Shaw.app"
-            BlueprintName = "Shaw"
-            ReferencedContainer = "container:Shaw.xcodeproj">
+            BuildableName = "Roadtrip.app"
+            BlueprintName = "Roadtrip"
+            ReferencedContainer = "container:Roadtrip.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

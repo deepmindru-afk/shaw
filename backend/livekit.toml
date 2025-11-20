@@ -3,7 +3,7 @@
 
 [agent]
 # Name of the agent (used for dispatching)
-name = "shaw-voice-assistant"
+name = "roadtrip-voice-assistant"
 
 # Entry point - the Python file that contains your agent code
 entrypoint = "agent.py"

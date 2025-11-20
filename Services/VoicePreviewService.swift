@@ -100,26 +100,24 @@ class VoicePreviewService: NSObject, ObservableObject {
             voiceFileName = getPreviewFileName(for: voice)
         }
 
-        // Construct URL to static preview file
-        // Use the API endpoint that serves static files
-        guard let baseURL = URL(string: configuration.apiBaseURL) else {
+        // Construct base URL pointing at the API host instead of /v1
+        guard let apiURL = URL(string: configuration.apiBaseURL),
+              var components = URLComponents(url: apiURL, resolvingAgainstBaseURL: false) else {
             throw VoicePreviewError.invalidURL
         }
 
-        // Get base URL without /v1 suffix
-        var basePath = baseURL.absoluteString
-        if basePath.hasSuffix("/v1") {
-            basePath = String(basePath.dropLast(3))
-        }
-        // Ensure no trailing slash
-        if basePath.hasSuffix("/") {
-            basePath = String(basePath.dropLast())
+        components.path = ""
+        components.query = nil
+        components.fragment = nil
+
+        guard let previewBaseURL = components.url else {
+            throw VoicePreviewError.invalidURL
         }
 
         // Use the static file endpoint: /voice-previews/{voiceId}.{ext}
-        guard let previewURL = URL(string: "\(basePath)/voice-previews/\(voiceFileName).\(fileExtension)") else {
-            throw VoicePreviewError.invalidURL
-        }
+        let previewURL = previewBaseURL
+            .appendingPathComponent("voice-previews")
+            .appendingPathComponent("\(voiceFileName).\(fileExtension)")
 
         // Check if file already exists in cache
         let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!

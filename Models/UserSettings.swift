@@ -24,12 +24,6 @@ class UserSettings: ObservableObject {
         }
     }
 
-    @Published var hasSeenOnboarding: Bool {
-        didSet {
-            UserDefaults.standard.set(hasSeenOnboarding, forKey: "hasSeenOnboarding")
-        }
-    }
-
     @Published var selectedModel: AIModel {
         didSet {
             if let data = try? JSONEncoder().encode(selectedModel) {
@@ -95,8 +89,6 @@ class UserSettings: ObservableObject {
         } else {
             self.retentionDays = 30 // Default to 30 days if not set
         }
-
-        self.hasSeenOnboarding = UserDefaults.standard.bool(forKey: "hasSeenOnboarding")
 
         // Load selected model
         if let data = UserDefaults.standard.data(forKey: "selectedModel"),

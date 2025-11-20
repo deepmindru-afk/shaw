@@ -395,7 +395,7 @@ enum SessionLoggerError: LocalizedError {
         case .proModelRestricted(let model, let suggested):
             let modelName = model.flatMap { AIModel(rawValue: $0)?.displayName } ?? "This model"
             let fallback = suggested.flatMap { AIModel(rawValue: $0)?.displayName } ?? AIModel.gpt51Nano.displayName
-            return "\(modelName) requires Shaw Pro. Switch to \(fallback) or another non-Pro model in Settings → AI Model."
+            return "\(modelName) requires Roadtrip Pro. Switch to \(fallback) or another non-Pro model in Settings → AI Model."
         }
     }
 }

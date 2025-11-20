@@ -1,4 +1,4 @@
-# Shaw Backend Deployment Guide
+# Roadtrip Backend Deployment Guide
 
 ## Environment Variables
 
@@ -58,18 +58,18 @@ Copy the output and set it as `ASC_PRIVATE_KEY_P8`.
 
 1. Go to your app in App Store Connect
 2. Navigate to App Information → App Store Server Notifications
-3. Set Production URL: `https://shaw.up.railway.app/iap/apple-asn`
-4. Set Sandbox URL: `https://shaw.up.railway.app/iap/apple-asn`
+3. Set Production URL: `https://roadtrip.up.railway.app/iap/apple-asn`
+4. Set Sandbox URL: `https://roadtrip.up.railway.app/iap/apple-asn`
 5. Enable Version 2 notifications
 6. Copy the Shared Secret and set it as `ASN_SHARED_SECRET`
 
 ### 4. Create Subscription Products
 
 1. In App Store Connect, go to your app → Subscriptions
-2. Create Subscription Group: "Shaw Pro"
+2. Create Subscription Group: "Roadtrip Pro"
 3. Add two products:
-   - **Monthly**: `com.vanities.shaw.pro.month` - $9.99/month
-   - **Yearly**: `com.vanities.shaw.pro.year` - $79.99/year
+   - **Monthly**: `com.vanities.roadtrip.pro.month` - $9.99/month
+   - **Yearly**: `com.vanities.roadtrip.pro.year` - $79.99/year
 
 ## Database Migration
 

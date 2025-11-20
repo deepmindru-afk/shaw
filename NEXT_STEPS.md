@@ -27,7 +27,7 @@
 
 **Option B: Via CLI**
 ```bash
-cd /Users/jeremycai/Projects/shaw-app
+cd /Users/jeremycai/Projects/roadtrip-app
 railway up --detach
 ```
 
@@ -54,7 +54,7 @@ railway logs --lines 100
 
 1. **Health Check**:
    ```bash
-   curl https://shaw.up.railway.app/health
+   curl https://roadtrip.up.railway.app/health
    ```
 
 2. **Test from iOS App**:

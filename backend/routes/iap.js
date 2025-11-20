@@ -24,7 +24,7 @@ router.post('/verify', authenticateToken, async (req, res) => {
       return res.json({
         isActive: true,
         isInGrace: false,
-        productId: req.body.productId || 'com.vanities.shaw.pro.month',
+        productId: req.body.productId || 'com.vanities.roadtrip.pro.month',
         originalTransactionId: 'dev-mode',
         expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
       });

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Added Perplexity web search as a tool call capability to the Shaw AI CarPlay assistant. The agent can now search the web for current information when users ask questions about news, weather, traffic, events, or real-time facts.
+Added Perplexity web search as a tool call capability to the Roadtrip AI CarPlay assistant. The agent can now search the web for current information when users ask questions about news, weather, traffic, events, or real-time facts.
 
 ## Implementation
 

@@ -1,6 +1,6 @@
 //
 //  SubscriptionManager.swift
-//  Shaw
+//  Roadtrip
 //
 
 import Foundation

@@ -3,7 +3,7 @@
  * Test script to manually trigger summary generation for a session
  */
 
-const BACKEND_URL = process.env.BACKEND_URL || 'https://shaw.up.railway.app';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://roadtrip.up.railway.app';
 const SESSION_ID = process.argv[2];
 
 if (!SESSION_ID) {
@@ -123,6 +123,7 @@ async function testSummary() {
 }
 
 testSummary().catch(console.error);
+
 
 
 

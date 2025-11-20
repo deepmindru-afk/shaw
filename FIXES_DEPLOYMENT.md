@@ -25,7 +25,7 @@ Fixed 3 critical issues:
 - Added event handlers for `user_speech_committed` and `agent_speech_committed`
 - Extracts `session_id` from job metadata
 - Captures and saves both user and assistant turns during conversation
-- Uses `BACKEND_URL` env var (defaults to `https://shaw.up.railway.app`)
+- Uses `BACKEND_URL` env var (defaults to `https://roadtrip.up.railway.app`)
 
 ### iOS Changes
 
@@ -148,7 +148,7 @@ If issues occur:
 Ensure these are set on Railway for the agent:
 
 ```env
-BACKEND_URL=https://shaw.up.railway.app
+BACKEND_URL=https://roadtrip.up.railway.app
 LIVEKIT_URL=wss://...
 LIVEKIT_API_KEY=...
 LIVEKIT_API_SECRET=...

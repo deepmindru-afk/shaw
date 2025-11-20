@@ -8,14 +8,14 @@ This folder holds workflow definitions that can be created without the Xcode UI.
    - `ASC_KEY_ID` (the key ID)
    - `ASC_ISSUER_ID` (team/issuer id)
    - `ASC_PRIVATE_KEY_PATH` pointing to the downloaded `AuthKey_XXXXXX.p8` file.
-2. Set `APP_BUNDLE_ID` (currently `com.vanities.Shaw`).
+2. Set `APP_BUNDLE_ID` (currently `com.vanities.Roadtrip`).
 3. Install `jq` and `openssl` (already available in macOS + Homebrew shells).
 
 ## Discover the IDs you need
 
 ```bash
 ASC_KEY_ID=XXXX ASC_ISSUER_ID=YYYY ASC_PRIVATE_KEY_PATH=~/AuthKey_XXXX.p8 \
-APP_BUNDLE_ID=com.vanities.Shaw \
+APP_BUNDLE_ID=com.vanities.Roadtrip \
 ./scripts/xcodecloud/workflows.sh list-prereqs
 ```
 
@@ -35,7 +35,7 @@ The JSON files inside `xcodecloud/workflows/` describe the workflow attributes (
 
 ```bash
 ASC_KEY_ID=... ASC_ISSUER_ID=... ASC_PRIVATE_KEY_PATH=... \
-APP_BUNDLE_ID=com.vanities.Shaw \
+APP_BUNDLE_ID=com.vanities.Roadtrip \
 XCODE_VERSION_ID="Xcode15.4" MACOS_VERSION_ID="14F" \
 ./scripts/xcodecloud/workflows.sh create
 ```

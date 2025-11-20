@@ -26,7 +26,7 @@ railway login
 cd backend
 railway link
 ```
-Select your Shaw backend project from the list.
+Select your Roadtrip backend project from the list.
 
 **4. Run the migration:**
 ```bash
@@ -50,7 +50,7 @@ You should see:
 
 **1. Go to Railway Dashboard:**
 - Open https://railway.app
-- Select your Shaw backend project
+- Select your Roadtrip backend project
 - Click on your PostgreSQL database
 
 **2. Open the "Query" tab**

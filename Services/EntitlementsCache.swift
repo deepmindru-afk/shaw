@@ -1,6 +1,6 @@
 //
 //  EntitlementsCache.swift
-//  Shaw
+//  Roadtrip
 //
 
 import Foundation
@@ -9,8 +9,8 @@ class EntitlementsCache {
     static let shared = EntitlementsCache()
 
     private let defaults = UserDefaults.standard
-    private let stateKey = "com.shaw.entitlements.state"
-    private let lastRefreshKey = "com.shaw.entitlements.lastRefresh"
+    private let stateKey = "com.roadtrip.entitlements.state"
+    private let lastRefreshKey = "com.roadtrip.entitlements.lastRefresh"
 
     private init() {}
 

@@ -21,7 +21,7 @@ This guide is for configuring the **Python Service** to fix the `libstdc++.so.6`
 In Railway dashboard:
 1. Go to your project
 2. Find the service that runs ONLY the Python agent (not the Node.js server)
-3. Note the service name (e.g., "shaw-agent" or "python-agent")
+3. Note the service name (e.g., "roadtrip-agent" or "python-agent")
 
 ### Step 2: Configure the Python Service
 
@@ -38,7 +38,7 @@ In Railway dashboard:
 **Option B: Via Railway CLI**
 
 ```bash
-cd /Users/jeremycai/Projects/shaw-app/backend
+cd /Users/jeremycai/Projects/roadtrip-app/backend
 
 # Link to the Python service (replace SERVICE_NAME with your Python service name)
 railway service SERVICE_NAME
@@ -56,7 +56,7 @@ The Python service needs these files in the `backend` directory:
 - `requirements.txt` ✅
 
 ```bash
-cd /Users/jeremycai/Projects/shaw-app
+cd /Users/jeremycai/Projects/roadtrip-app
 git add backend/start-agent.sh backend/nixpacks-agent.toml backend/railway-agent.json
 git commit -m "Add Python agent service configuration for Railway"
 git push origin main

@@ -642,5 +642,5 @@ async def monitored_tool(context: RunContext):
 
 ---
 
-**Generated for Shaw AI CarPlay Assistant**  
+**Generated for Roadtrip AI CarPlay Assistant**  
 Last Updated: 2025-01-11

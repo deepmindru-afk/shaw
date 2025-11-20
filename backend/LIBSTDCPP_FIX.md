@@ -144,7 +144,7 @@ Create a `backend/flake.nix` for more control:
 
 ```nix
 {
-  description = "Shaw Backend";
+  description = "Roadtrip Backend";
   
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
   
@@ -152,7 +152,7 @@ Create a `backend/flake.nix` for more control:
     defaultPackage.x86_64-linux = 
       let pkgs = import nixpkgs { system = "x86_64-linux"; };
       in pkgs.buildEnv {
-        name = "shaw-backend";
+        name = "roadtrip-backend";
         paths = [
           pkgs.nodejs_20
           pkgs.python311

@@ -1,6 +1,6 @@
 //
 //  HybridSessionLogger.swift
-//  Shaw
+//  Roadtrip
 //
 //  Coordinates session storage between CloudKit (for sync) and Backend (for billing)
 //

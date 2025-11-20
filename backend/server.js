@@ -25,7 +25,7 @@ import path from 'path';
 import fs from 'fs';
 import OpenAI from 'openai';
 import db, { usePostgres } from './database.js';
-import { generateRoomName, generateLiveKitToken, getLiveKitUrl, logLiveKitConfig, dispatchAgentToRoom } from './livekit.js';
+import { generateRoomName, generateLiveKitToken, getLiveKitUrl, logLiveKitConfig, dispatchAgentToRoom, getAgentName } from './livekit.js';
 import iapRoutes from './routes/iap.js';
 import { checkEntitlement, incrementFreeTierUsage, FREE_TIER_MINUTES } from './middleware/entitlementCheck.js';
 
@@ -252,7 +252,7 @@ async function generateSummaryAndTitle(sessionId) {
     console.error(`❌ Failed to generate summary for session ${sessionId}:`, error.message);
     console.error(`   Error type: ${error.constructor.name}`);
     console.error(`   Error details:`, error);
-    
+
     // Log OpenAI API errors specifically
     if (error.response) {
       console.error(`   OpenAI API Error:`, {
@@ -261,7 +261,7 @@ async function generateSummaryAndTitle(sessionId) {
         data: error.response.data
       });
     }
-    
+
     if (error.message?.includes('model')) {
       console.error(`   ⚠️  Model-related error - check if model name is correct`);
     }
@@ -384,6 +384,53 @@ const authenticateToken = async (req, res, next) => {
   next();
 };
 
+// 4. DELETE /v1/auth/account - Delete account and all data
+app.delete('/v1/auth/account', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    console.log(`🗑️  Request to delete account for user: ${userId}`);
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID not found' });
+    }
+
+    // 1. Delete all turns associated with user's sessions
+    const deleteTurns = db.prepare(`
+      DELETE FROM turns 
+      WHERE session_id IN (SELECT id FROM sessions WHERE user_id = ?)
+    `);
+    const turnsResult = await deleteTurns.run(userId);
+    console.log(`   Deleted ${turnsResult.changes} turns`);
+
+    // 2. Delete all summaries associated with user's sessions
+    const deleteSummaries = db.prepare(`
+      DELETE FROM summaries 
+      WHERE session_id IN (SELECT id FROM sessions WHERE user_id = ?)
+    `);
+    const summariesResult = await deleteSummaries.run(userId);
+    console.log(`   Deleted ${summariesResult.changes} summaries`);
+
+    // 3. Delete all sessions
+    const deleteSessions = db.prepare('DELETE FROM sessions WHERE user_id = ?');
+    const sessionsResult = await deleteSessions.run(userId);
+    console.log(`   Deleted ${sessionsResult.changes} sessions`);
+
+    // 4. Delete subscription records
+    const deleteSub = db.prepare('DELETE FROM user_subscriptions WHERE user_id = ?');
+    await deleteSub.run(userId);
+
+    // 5. Delete usage records
+    const deleteUsage = db.prepare('DELETE FROM monthly_usage WHERE user_id = ?');
+    await deleteUsage.run(userId);
+
+    console.log(`✅ Account deletion complete for ${userId}`);
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('❌ Error deleting account:', error);
+    res.status(500).json({ error: 'Failed to delete account' });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -393,14 +440,14 @@ app.get('/health', (req, res) => {
 app.get('/health/agent', async (req, res) => {
   // Check if agent is configured and can connect to LiveKit
   const agentConfigured = !!(process.env.LIVEKIT_API_KEY &&
-                              process.env.LIVEKIT_API_SECRET &&
-                              process.env.LIVEKIT_URL);
+    process.env.LIVEKIT_API_SECRET &&
+    process.env.LIVEKIT_URL);
   const perplexityConfigured = !!process.env.PERPLEXITY_API_KEY;
 
   let agentStatus = 'unknown';
   let lastRoomActivity = null;
   let agentWorkerInfo = null;
-  
+
   if (agentConfigured) {
     try {
       // Try to connect to LiveKit to verify credentials work
@@ -411,13 +458,13 @@ app.get('/health/agent', async (req, res) => {
         process.env.LIVEKIT_API_KEY,
         process.env.LIVEKIT_API_SECRET
       );
-      
+
       const agentDispatchClient = new AgentDispatchClient(
         apiUrl,
         process.env.LIVEKIT_API_KEY,
         process.env.LIVEKIT_API_SECRET
       );
-      
+
       // List recent rooms to verify API access works
       try {
         const rooms = await roomService.listRooms();
@@ -431,7 +478,7 @@ app.get('/health/agent', async (req, res) => {
             created_at: recentRoom.creationTime ? new Date(recentRoom.creationTime * 1000).toISOString() : null
           };
         }
-        
+
         // Try to list dispatches to see if agent worker is registered
         // This helps verify the agent worker is running and listening
         try {
@@ -442,7 +489,7 @@ app.get('/health/agent', async (req, res) => {
             note: 'Agent worker registration cannot be verified via API',
             check_logs: 'Check /tmp/agent.log for worker registration messages',
             expected_log: 'Agent worker appears to be connecting (checking logs...)',
-            agent_name: process.env.LIVEKIT_AGENT_NAME || 'agent'
+            agent_name: getAgentName()
           };
         } catch (error) {
           // Ignore - dispatch API might not be available
@@ -467,7 +514,7 @@ app.get('/health/agent', async (req, res) => {
     last_room_activity: lastRoomActivity,
     agent_worker_info: agentWorkerInfo,
     timestamp: new Date().toISOString(),
-    note: agentStatus === 'livekit_connected' 
+    note: agentStatus === 'livekit_connected'
       ? 'LiveKit API is accessible. Check agent worker logs to verify registration: tail -f /tmp/agent.log'
       : 'Check agent worker logs: tail -f /tmp/agent.log'
   });
@@ -671,21 +718,21 @@ app.post('/v1/sessions/start', authenticateToken, async (req, res) => {
 // Helper function to get or initialize user subscription
 function getUserSubscription(userId) {
   let subscription = db.prepare('SELECT * FROM user_subscriptions WHERE user_id = ?').get(userId);
-  
+
   if (!subscription) {
     // Initialize with free tier
     const now = new Date();
     const billingPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const billingPeriodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
-    
+
     db.prepare(`
       INSERT INTO user_subscriptions (user_id, subscription_tier, monthly_minutes_limit, billing_period_start, billing_period_end, updated_at)
       VALUES (?, 'free', 60, ?, ?, ?)
     `).run(userId, billingPeriodStart, billingPeriodEnd, now.toISOString());
-    
+
     subscription = db.prepare('SELECT * FROM user_subscriptions WHERE user_id = ?').get(userId);
   }
-  
+
   return subscription;
 }
 
@@ -694,10 +741,10 @@ function getCurrentMonthUsage(userId) {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth() + 1; // 1-12
-  
+
   let usage = db.prepare('SELECT * FROM monthly_usage WHERE user_id = ? AND year = ? AND month = ?')
     .get(userId, year, month);
-  
+
   if (!usage) {
     // Initialize usage for this month
     const usageId = `usage-${crypto.randomUUID()}`;
@@ -705,11 +752,11 @@ function getCurrentMonthUsage(userId) {
       INSERT INTO monthly_usage (id, user_id, year, month, used_minutes)
       VALUES (?, ?, ?, ?, 0)
     `).run(usageId, userId, year, month);
-    
+
     usage = db.prepare('SELECT * FROM monthly_usage WHERE user_id = ? AND year = ? AND month = ?')
       .get(userId, year, month);
   }
-  
+
   return usage;
 }
 
@@ -842,7 +889,7 @@ app.get('/v1/sessions/:id', authenticateToken, (req, res) => {
     if (!sessionRow) {
       return res.status(404).json({ error: 'Session not found' });
     }
-    
+
     const session = normalizeSession(sessionRow);
 
     // Fetch summary if it exists (linked via session_id foreign key)
@@ -999,7 +1046,7 @@ app.post('/v1/auth/login', (req, res) => {
       // Use a predefined token that maps to our test user
       const testToken = 'test_account_token_for_app_store_review';
       const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(); // 1 year
-      
+
       console.log('✅ App Store review test account login successful');
       res.json({
         token: testToken,
@@ -1046,11 +1093,11 @@ app.get('/v1/usage/credits', authenticateToken, (req, res) => {
     const subscription = getUserSubscription(req.userId);
     const usage = getCurrentMonthUsage(req.userId);
     const monthlyLimit = getTierLimits(subscription.subscription_tier);
-    
+
     const usedMinutes = usage.used_minutes || 0;
     const hasCredits = monthlyLimit === -1 || usedMinutes < monthlyLimit;
     const remainingMinutes = monthlyLimit === -1 ? null : Math.max(0, monthlyLimit - usedMinutes);
-    
+
     res.json({
       has_credits: hasCredits,
       remaining_minutes: remainingMinutes,
@@ -1068,22 +1115,22 @@ app.get('/v1/usage/credits', authenticateToken, (req, res) => {
 app.post('/v1/usage/report', authenticateToken, (req, res) => {
   try {
     const { session_id, minutes } = req.body;
-    
+
     if (!session_id || minutes === undefined) {
       return res.status(400).json({ error: 'Missing session_id or minutes' });
     }
-    
+
     // Verify session belongs to user
     const session = db.prepare('SELECT id FROM sessions WHERE id = ? AND user_id = ?')
       .get(session_id, req.userId);
-    
+
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
     }
-    
+
     // Get current month usage
     const usage = getCurrentMonthUsage(req.userId);
-    
+
     // Update usage
     const updateStmt = db.prepare(`
       UPDATE monthly_usage 
@@ -1091,7 +1138,7 @@ app.post('/v1/usage/report', authenticateToken, (req, res) => {
       WHERE id = ?
     `);
     updateStmt.run(minutes, usage.id);
-    
+
     res.status(204).send();
   } catch (error) {
     console.error('Report usage error:', error);
@@ -1105,10 +1152,10 @@ app.get('/v1/usage/stats', authenticateToken, (req, res) => {
     const subscription = getUserSubscription(req.userId);
     const usage = getCurrentMonthUsage(req.userId);
     const monthlyLimit = getTierLimits(subscription.subscription_tier);
-    
+
     const usedMinutes = usage.used_minutes || 0;
     const remainingMinutes = monthlyLimit === -1 ? null : Math.max(0, monthlyLimit - usedMinutes);
-    
+
     res.json({
       used_minutes: usedMinutes,
       remaining_minutes: remainingMinutes,
@@ -1129,32 +1176,32 @@ app.get('/v1/usage/stats', authenticateToken, (req, res) => {
 app.get('/v1/voice-preview/:voiceId', (req, res) => {
   try {
     const { voiceId } = req.params;
-    
+
     // Determine file extension based on voice ID prefix
     const extension = voiceId.startsWith('cartesia-') ? 'm4a' : 'mp3';
     const filePath = path.join(previewsDir, `${voiceId}.${extension}`);
-    
+
     // Check if file exists
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'Preview not found',
         message: `Voice preview for ${voiceId} not found. Run generate-voice-previews.js script to generate previews.`
       });
     }
-    
+
     // Determine content type
     const contentType = extension === 'm4a' ? 'audio/mp4' : 'audio/mpeg';
     const stats = fs.statSync(filePath);
-    
+
     // Set headers and send file
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Length', stats.size);
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
     res.setHeader('Accept-Ranges', 'bytes');
-    
+
     const fileStream = fs.createReadStream(filePath);
     fileStream.pipe(res);
-    
+
   } catch (error) {
     console.error('Voice preview error:', error);
     res.status(500).json({ error: error.message });
@@ -1172,19 +1219,19 @@ const validateLiveKitConfig = () => {
   const apiKey = process.env.LIVEKIT_API_KEY;
   const apiSecret = process.env.LIVEKIT_API_SECRET;
   const url = process.env.LIVEKIT_URL;
-  
+
   console.log('\n🔍 LiveKit Configuration Check:');
   console.log(`   API Key: ${apiKey ? `${apiKey.slice(0, 6)}...` : '❌ NOT SET'}`);
   console.log(`   API Secret: ${apiSecret ? '✅ SET' : '❌ NOT SET'}`);
   console.log(`   URL: ${url || '❌ NOT SET'}`);
-  
+
   if (!apiKey || !apiSecret || !url) {
     console.error('\n❌ ERROR: LiveKit credentials are not fully configured!');
     console.error('   Please check your .env file in the backend directory.');
     console.error('   Required variables: LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL');
     return false;
   }
-  
+
   console.log('✅ LiveKit configuration is valid\n');
   return true;
 };
