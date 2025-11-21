@@ -256,7 +256,7 @@ async function dispatchAgentWithRetry(roomName, sessionId, model, voice, toolCal
   // Agent metadata to pass to the LiveKit agent
   const agentMetadata = JSON.stringify({
     session_id: sessionId,
-    model: model || 'openai/gpt-5.1-nano',
+    model: model || 'openai/gpt-4o-mini',
     voice: voice || 'cartesia/sonic-3:9626c31c-bec5-4cca-baa8-f8ba9e84c8bc',
     instructions: 'You are a helpful voice AI assistant for CarPlay. Keep responses concise and clear for safe driving.',
     tool_calling_enabled: toolCallingEnabled !== undefined ? toolCallingEnabled : true,

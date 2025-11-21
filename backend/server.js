@@ -177,9 +177,9 @@ async function generateSummaryAndTitle(sessionId) {
     // Format transcript
     const transcript = turns.map(t => `${t.speaker}: ${t.text}`).join('\n');
 
-    // Generate summary using GPT-5.1 Nano via OpenAI API
+    // Generate summary using GPT-4o mini via OpenAI API
     const summaryResponse = await openai.chat.completions.create({
-      model: 'gpt-5.1-nano',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -195,13 +195,13 @@ async function generateSummaryAndTitle(sessionId) {
 
     const summaryText = summaryResponse.choices[0]?.message?.content?.trim();
     if (!summaryText) {
-      console.error('❌ GPT-5.1 Nano returned empty summary text:', JSON.stringify(summaryResponse, null, 2));
-      throw new Error('GPT-5.1 Nano returned empty summary text');
+      console.error('❌ GPT-4o mini returned empty summary text:', JSON.stringify(summaryResponse, null, 2));
+      throw new Error('GPT-4o mini returned empty summary text');
     }
 
     // Generate title based on the completed summary for consistency
     const titleResponse = await openai.chat.completions.create({
-      model: 'gpt-5.1-nano',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -590,7 +590,9 @@ app.post('/v1/sessions/start', authenticateToken, async (req, res) => {
     // Models use LiveKit Inference provider/model format
     // See: https://docs.livekit.io/agents/models/#inference
     const validModels = [
-      // OpenAI models available through LiveKit Inference
+      // OpenAI models (legacy descriptors map to Chat Completions)
+      'openai/gpt-4o',
+      'openai/gpt-4o-mini',
       'openai/gpt-5.1',
       'openai/gpt-5.1-mini',
       'openai/gpt-5.1-nano',
@@ -608,17 +610,20 @@ app.post('/v1/sessions/start', authenticateToken, async (req, res) => {
 
     // Pro-only models require active subscription
     const proOnlyModels = [
+      'openai/gpt-4o',
       'openai/gpt-5.1',
       'claude-sonnet-4-5',
       'google/gemini-2.5-pro',
       'xai/grok-4'
     ];
 
-    let selectedModel = model && validModels.includes(model) ? model : 'openai/gpt-5.1-nano';
+    let selectedModel = model && validModels.includes(model) ? model : 'openai/gpt-4o-mini';
     let modelSubstitution = null;
 
     if (normalizedToolCalling) {
       const toolCapableModels = [
+        'openai/gpt-4o',
+        'openai/gpt-4o-mini',
         'openai/gpt-5.1',
         'openai/gpt-5.1-mini',
         'openai/gpt-5.1-nano',
@@ -629,12 +634,12 @@ app.post('/v1/sessions/start', authenticateToken, async (req, res) => {
         'google/gemini-2.5-flash-lite'
       ];
       if (!toolCapableModels.includes(selectedModel)) {
-        console.warn(`⚠️  Tool calling requested but model ${selectedModel} is not in the tool-capable allowlist. Falling back to openai/gpt-5.1-nano.`);
+        console.warn(`⚠️  Tool calling requested but model ${selectedModel} is not in the tool-capable allowlist. Falling back to openai/gpt-4o-mini.`);
         modelSubstitution = {
           requested: selectedModel,
-          substituted: 'openai/gpt-5.1-nano'
+          substituted: 'openai/gpt-4o-mini'
         };
-        selectedModel = 'openai/gpt-5.1-nano';
+        selectedModel = 'openai/gpt-4o-mini';
       }
     }
 
@@ -644,9 +649,9 @@ app.post('/v1/sessions/start', authenticateToken, async (req, res) => {
       if (!hasPro) {
         return res.status(403).json({
           error: 'PRO_REQUIRED',
-          message: 'Roadtrip Pro is required to use this model. Please switch to GPT-5.1 Nano or another non-Pro option.',
+          message: 'Roadtrip Pro is required to use this model. Please switch to GPT-4o Mini or another non-Pro option.',
           model: selectedModel,
-          suggested_model: 'openai/gpt-5.1-nano'
+          suggested_model: 'openai/gpt-4o-mini'
         });
       }
     }

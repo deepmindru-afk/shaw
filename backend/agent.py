@@ -77,23 +77,35 @@ LANGUAGE_DISPLAY_NAMES = {
 }
 
 DEFAULT_OPENAI_CHAT_MODEL = "gpt-4o-mini"
+LEGACY_OPENAI_MODEL_ALIASES: dict[str, str] = {
+    "gpt-5.1-nano": "gpt-4o-mini",
+    "gpt-5.1-mini": "gpt-4o-mini",
+    "gpt-5.1": "gpt-4o",
+}
 
 def resolve_openai_chat_model(model: str | None) -> str:
     """Convert internal identifiers (e.g. openai/gpt-5.1-nano) to OpenAI chat model names."""
     normalized = (model or "").strip()
     if not normalized:
-        return DEFAULT_OPENAI_CHAT_MODEL
-
-    # Legacy LiveKit descriptors mapped to current Chat Completions models
-    if normalized in ("gpt-5.1-nano", "gpt-5.1-mini", "gpt-5.1"):
-        logger.warning(f"⚠️  Model {normalized} not available on Chat Completions; using gpt-4o-mini instead")
-        return "gpt-4o-mini"
+        normalized = DEFAULT_OPENAI_CHAT_MODEL
 
     if normalized.startswith("openai/"):
-        return normalized.split("/", 1)[1]
+        normalized = normalized.split("/", 1)[1]
 
-    logger.warning(f"⚠️  Unsupported provider for non-realtime mode: {normalized}. Falling back to {DEFAULT_OPENAI_CHAT_MODEL}")
-    return DEFAULT_OPENAI_CHAT_MODEL
+    alias_target = LEGACY_OPENAI_MODEL_ALIASES.get(normalized)
+    if alias_target:
+        logger.warning(
+            f"⚠️  Model {normalized} is not available on Chat Completions; using {alias_target} instead"
+        )
+        return alias_target
+
+    if "/" in normalized:
+        logger.warning(
+            f"⚠️  Unsupported provider for non-realtime mode: {normalized}. Falling back to {DEFAULT_OPENAI_CHAT_MODEL}"
+        )
+        return DEFAULT_OPENAI_CHAT_MODEL
+
+    return normalized
 
 ANTHROPIC_MODEL_CANDIDATES: dict[str, list[str]] = {
     "claude-sonnet-4-5": [
@@ -453,6 +465,7 @@ class TranscriptManager:
             'user': {},
             'assistant': {},
         }
+        self._last_saved_turn: tuple[str, str] | None = None
         self._pending_user_partial: str | None = None
 
     def handle_user_transcript_chunk(self, transcript: str, is_final: bool) -> None:
@@ -546,6 +559,10 @@ class TranscriptManager:
         asyncio.create_task(save_turn(self._session_id, speaker, text))
 
     def _is_duplicate(self, speaker: str, text: str) -> bool:
+        # Drop exact back-to-back duplicates (same speaker/text) before applying time-window checks.
+        if self._last_saved_turn == (speaker, text):
+            return True
+
         now = time.monotonic()
         cache = self._recent_turns.setdefault(speaker, {})
 
@@ -559,6 +576,7 @@ class TranscriptManager:
             return True
 
         cache[text] = now
+        self._last_saved_turn = (speaker, text)
         return False
 
 class AssistantTranscriptSink(agents_io.TextOutput):
@@ -823,7 +841,7 @@ async def entrypoint(ctx: agents.JobContext):
     if not isinstance(voice, str) or not voice.strip():
         voice = 'cartesia/sonic-3:9626c31c-bec5-4cca-baa8-f8ba9e84c8bc'
     voice = voice.strip()
-    model = metadata.get('model', 'openai/gpt-5.1-nano')
+    model = metadata.get('model', 'openai/gpt-4o-mini')
     tool_calling_enabled = metadata.get('tool_calling_enabled', True)
     web_search_enabled = metadata.get('web_search_enabled', True)
     language = metadata.get('language', 'en-US')
