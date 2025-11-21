@@ -394,7 +394,7 @@ enum SessionLoggerError: LocalizedError {
             return "Server error (\(statusCode)): \(message)"
         case .proModelRestricted(let model, let suggested):
             let modelName = model.flatMap { AIModel(rawValue: $0)?.displayName } ?? "This model"
-            let fallback = suggested.flatMap { AIModel(rawValue: $0)?.displayName } ?? AIModel.gpt51Nano.displayName
+            let fallback = suggested.flatMap { AIModel(rawValue: $0)?.displayName } ?? AIModel.gpt4oMini.displayName
             return "\(modelName) requires Roadtrip Pro. Switch to \(fallback) or another non-Pro model in Settings → AI Model."
         }
     }

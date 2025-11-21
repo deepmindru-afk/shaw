@@ -201,10 +201,9 @@ enum AIModelProvider: String, Codable, CaseIterable {
 }
 
 enum AIModel: String, Codable, CaseIterable {
-    // OpenAI GPT-5.1 Series
-    case gpt51 = "openai/gpt-5.1"
-    case gpt51Mini = "openai/gpt-5.1-mini"
-    case gpt51Nano = "openai/gpt-5.1-nano"
+    // OpenAI GPT-4o Series
+    case gpt4o = "openai/gpt-4o"
+    case gpt4oMini = "openai/gpt-4o-mini"
 
     // Anthropic Claude 4.5 Series
     case claudeSonnet45 = "claude-sonnet-4-5"
@@ -219,6 +218,34 @@ enum AIModel: String, Codable, CaseIterable {
     case grok4 = "xai/grok-4"
     case grok4Mini = "xai/grok-4-mini"
 
+    private static let legacyModelMap: [String: AIModel] = [
+        "openai/gpt-5.1": .gpt4o,
+        "openai/gpt-5.1-mini": .gpt4oMini,
+        "openai/gpt-5.1-nano": .gpt4oMini,
+        "openai/gpt-5": .gpt4o,
+        "openai/gpt-5-mini": .gpt4oMini,
+        "openai/gpt-5-nano": .gpt4oMini,
+        "openai/gpt-4.1": .gpt4o,
+        "openai/gpt-4.1-mini": .gpt4oMini,
+        "openai/gpt-4.1-nano": .gpt4oMini,
+        "openai/gpt-4o-realtime-preview": .gpt4o,
+        "openai/gpt-oss-120b": .gpt4o
+    ]
+
+    static var allCases: [AIModel] {
+        [
+            .gpt4o,
+            .gpt4oMini,
+            .claudeSonnet45,
+            .claudeHaiku45,
+            .gemini25Pro,
+            .gemini25Flash,
+            .gemini25FlashLite,
+            .grok4,
+            .grok4Mini
+        ]
+    }
+
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let value = try container.decode(String.self)
@@ -229,12 +256,8 @@ enum AIModel: String, Codable, CaseIterable {
         }
 
         switch value {
-        case "openai/gpt-5", "openai/gpt-4.1", "openai/gpt-4o", "openai/gpt-oss-120b":
-            self = .gpt51
-        case "openai/gpt-5-mini", "openai/gpt-4o-mini":
-            self = .gpt51Mini
-        case "openai/gpt-5-nano", "openai/gpt-4.1-mini", "openai/gpt-4.1-nano":
-            self = .gpt51Nano
+        case let legacy where AIModel.legacyModelMap.keys.contains(legacy):
+            self = AIModel.legacyModelMap[legacy] ?? .gpt4oMini
         case "google/gemini-2.0-flash":
             self = .gemini25Flash
         case "google/gemini-2.0-flash-lite":
@@ -258,7 +281,7 @@ enum AIModel: String, Codable, CaseIterable {
 
     var provider: AIModelProvider {
         switch self {
-        case .gpt51, .gpt51Mini, .gpt51Nano:
+        case .gpt4o, .gpt4oMini:
             return .openai
         case .claudeSonnet45, .claudeHaiku45:
             return .anthropic
@@ -271,9 +294,8 @@ enum AIModel: String, Codable, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .gpt51: return "GPT-5.1"
-        case .gpt51Mini: return "GPT-5.1 Mini"
-        case .gpt51Nano: return "GPT-5.1 Nano"
+        case .gpt4o: return "GPT-4o"
+        case .gpt4oMini: return "GPT-4o Mini"
         case .claudeSonnet45: return "Claude Sonnet 4.5"
         case .claudeHaiku45: return "Claude Haiku 4.5"
         case .gemini25Pro: return "Gemini 2.5 Pro"
@@ -286,9 +308,8 @@ enum AIModel: String, Codable, CaseIterable {
 
     var description: String {
         switch self {
-        case .gpt51: return "GPT-5.1 - Flagship multimodal reasoning"
-        case .gpt51Mini: return "GPT-5.1 Mini - Fast and capable"
-        case .gpt51Nano: return "GPT-5.1 Nano - Lightning quick"
+        case .gpt4o: return "GPT-4o - Flagship multimodal reasoning"
+        case .gpt4oMini: return "GPT-4o Mini - Fast and capable"
         case .claudeSonnet45: return "Most capable Claude - Best for complex tasks"
         case .claudeHaiku45: return "Fast Claude - Great for quick responses"
         case .gemini25Pro: return "Most capable Gemini - Best for reasoning"
@@ -301,7 +322,7 @@ enum AIModel: String, Codable, CaseIterable {
 
     var requiresPro: Bool {
         switch self {
-        case .gpt51, .claudeSonnet45, .gemini25Pro, .grok4:
+        case .gpt4o, .claudeSonnet45, .gemini25Pro, .grok4:
             return true
         default:
             return false

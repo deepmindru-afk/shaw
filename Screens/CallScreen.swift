@@ -141,7 +141,7 @@ struct CallScreen: View {
                 selectedLoggingOption = settings.loggingEnabled ? .enabled : .disabled
             }
             if !subscriptionManager.state.isActive && settings.selectedModel.requiresPro {
-                settings.selectedModel = .gpt51Nano
+                settings.selectedModel = .gpt4oMini
             }
         }
         .alert("Error", isPresented: $showErrorAlert) {
@@ -691,7 +691,7 @@ struct ModelPickerView: View {
                 showPaywall = true
             }
         } message: {
-            Text("This model is available for Roadtrip Pro members. Upgrade to unlock it or pick GPT-5.1 Nano.")
+            Text("This model is available for Roadtrip Pro members. Upgrade to unlock it or pick GPT-4o Mini.")
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView()

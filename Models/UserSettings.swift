@@ -93,13 +93,9 @@ class UserSettings: ObservableObject {
         // Load selected model
         if let data = UserDefaults.standard.data(forKey: "selectedModel"),
            let model = try? JSONDecoder().decode(AIModel.self, from: data) {
-            if model == .gpt51Mini {
-                self.selectedModel = .gpt51Nano
-            } else {
-                self.selectedModel = model
-            }
+            self.selectedModel = model
         } else {
-            self.selectedModel = .gpt51Nano
+            self.selectedModel = .gpt4oMini
         }
 
         let storedLanguage = UserDefaults.standard.string(forKey: "selectedLanguage")
